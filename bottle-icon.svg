@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- 背景圓角方塊 -->
+  <rect width="200" height="200" rx="44" ry="44" fill="#f5ddd4"/>
+  <rect x="11" y="11" width="178" height="178" rx="36" ry="36" fill="#fdf6ee"/>
+
+  <!-- 奶嘴頭 -->
+  <rect x="88" y="22" width="24" height="18" rx="8" ry="8" fill="#5a8fa8"/>
+
+  <!-- 瓶蓋環 -->
+  <rect x="72" y="40" width="56" height="18" rx="9" ry="9" fill="#7ab8cc"/>
+
+  <!-- 瓶頸 -->
+  <rect x="78" y="57" width="44" height="20" fill="#dceef7"/>
+
+  <!-- 瓶身外框 -->
+  <rect x="52" y="74" width="96" height="106" rx="20" ry="20" fill="#a8c4d4"/>
+
+  <!-- 瓶身內填白 -->
+  <rect x="55" y="77" width="90" height="100" rx="18" ry="18" fill="#dceef7"/>
+
+  <!-- 奶液（下半部約55%） -->
+  <clipPath id="bottleClip">
+    <rect x="55" y="77" width="90" height="100" rx="18" ry="18"/>
+  </clipPath>
+  <rect x="55" y="122" width="90" height="55" fill="#b8dff0" clip-path="url(#bottleClip)"/>
+
+  <!-- 奶液頂部波浪線 -->
+  <path d="M55 124 Q72 118 100 124 Q128 130 145 124 L145 122 Q128 116 100 122 Q72 128 55 122 Z" fill="#9dd0e8" clip-path="url(#bottleClip)"/>
+
+  <!-- 刻度線右側（紅色） -->
+  <line x1="122" y1="97"  x2="142" y2="97"  stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="128" y1="110" x2="142" y2="110" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="122" y1="123" x2="142" y2="123" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="128" y1="136" x2="142" y2="136" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- 瓶頸左右描邊 -->
+  <line x1="78"  y1="57" x2="78"  y2="76" stroke="#a8c4d4" stroke-width="2"/>
+  <line x1="122" y1="57" x2="122" y2="76" stroke="#a8c4d4" stroke-width="2"/>
+  <line x1="78"  y1="75" x2="122" y2="75" stroke="#a8c4d4" stroke-width="1.5"/>
+
+  <!-- 高光（左上橢圓） -->
+  <ellipse cx="72" cy="98" rx="7" ry="18" fill="white" opacity="0.45"/>
+</svg>
