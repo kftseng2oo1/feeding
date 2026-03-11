@@ -1,164 +1,43 @@
-<svg id="bottle512" width="220" height="420" viewBox="0 0 220 420" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#0c3c18" stop-opacity="0.95"/>
-      <stop offset="18%"  stop-color="#669672" stop-opacity="0.9"/>
-      <stop offset="45%"  stop-color="#2a5a36" stop-opacity="0.85"/>
-      <stop offset="75%"  stop-color="#0c3c18" stop-opacity="0.92"/>
-      <stop offset="100%" stop-color="#0c3c18" stop-opacity="0.98"/>
-    </linearGradient>
-    <linearGradient id="sheenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="white" stop-opacity="0"/>
-      <stop offset="22%"  stop-color="white" stop-opacity="0.18"/>
-      <stop offset="38%"  stop-color="white" stop-opacity="0.06"/>
-      <stop offset="100%" stop-color="white" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="labelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%"   stop-color="#e2bb60"/>
-      <stop offset="100%" stop-color="#d0ac58"/>
-    </linearGradient>
-    <filter id="shadow">
-      <feDropShadow dx="3" dy="6" stdDeviation="8" flood-color="#0c3c18" flood-opacity="0.5"/>
-    </filter>
-    <filter id="labelShadow">
-      <feDropShadow dx="1" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.15"/>
-    </filter>
-    <clipPath id="bottleClip"><path d="
-    M 110 82
-    L 98 84
-    L 95 100
-    L 95 176
-    Q 86 185
-      72.5 194
-    L 72.5 384
-    Q 72.5 390 78.5 390
-    L 141.5 390
-    Q 147.5 390 147.5 384
-    L 147.5 194
-    Q 134 185
-      125 176
-    L 125 100
-    L 122 84
-    Z
-  "/></clipPath>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- 背景圓角方塊 -->
+  <rect width="200" height="200" rx="44" ry="44" fill="#f5ddd4"/>
+  <rect x="11" y="11" width="178" height="178" rx="36" ry="36" fill="#fdf6ee"/>
 
-  <!-- Bottle glass body -->
-  <path d="
-    M 110 82
-    L 98 84
-    L 95 100
-    L 95 176
-    Q 86 185
-      72.5 194
-    L 72.5 384
-    Q 72.5 390 78.5 390
-    L 141.5 390
-    Q 147.5 390 147.5 384
-    L 147.5 194
-    Q 134 185
-      125 176
-    L 125 100
-    L 122 84
-    Z
-  " fill="url(#glassGrad)" filter="url(#shadow)"/>
+  <!-- 奶嘴頭 -->
+  <rect x="88" y="22" width="24" height="18" rx="8" ry="8" fill="#5a8fa8"/>
 
-  <!-- Inner fill illusion (liquid) -->
-  <rect x="74.5" y="224" width="71"
-        height="158" clip-path="url(#bottleClip)"
-        fill="#2a5a36" opacity="0.35"/>
+  <!-- 瓶蓋環 -->
+  <rect x="72" y="40" width="56" height="18" rx="9" ry="9" fill="#7ab8cc"/>
 
-  <!-- Sheen highlight -->
-  <path d="
-    M 110 82
-    L 98 84
-    L 95 100
-    L 95 176
-    Q 86 185
-      72.5 194
-    L 72.5 384
-    Q 72.5 390 78.5 390
-    L 141.5 390
-    Q 147.5 390 147.5 384
-    L 147.5 194
-    Q 134 185
-      125 176
-    L 125 100
-    L 122 84
-    Z
-  " fill="url(#sheenGrad)" clip-path="url(#bottleClip)"/>
+  <!-- 瓶頸 -->
+  <rect x="78" y="57" width="44" height="20" fill="#dceef7"/>
 
-  <!-- Left edge shadow line -->
-  <path d="M 75.5 194 L 75.5 382"
-        stroke="#0c3c18" stroke-width="2.5" opacity="0.4" clip-path="url(#bottleClip)"/>
+  <!-- 瓶身外框 -->
+  <rect x="52" y="74" width="96" height="106" rx="20" ry="20" fill="#a8c4d4"/>
 
-  <!-- ── LABEL ── -->
-  <rect x="80.9375" y="217.52" width="58.125" height="137.20000000000002"
-        rx="3" fill="url(#labelGrad)" filter="url(#labelShadow)"
-        clip-path="url(#bottleClip)"/>
+  <!-- 瓶身內填白 -->
+  <rect x="55" y="77" width="90" height="100" rx="18" ry="18" fill="#dceef7"/>
 
-  <!-- Label border -->
-  <rect x="84.9375" y="221.52" width="50.125" height="129.20000000000002"
-        rx="2" fill="none" stroke="#2a1e0a" stroke-width="0.6" opacity="0.3"/>
+  <!-- 奶液（下半部約55%） -->
+  <clipPath id="bottleClip">
+    <rect x="55" y="77" width="90" height="100" rx="18" ry="18"/>
+  </clipPath>
+  <rect x="55" y="122" width="90" height="55" fill="#b8dff0" clip-path="url(#bottleClip)"/>
 
-  <!-- Brand name -->
-  <text x="110" y="260.68"
-        text-anchor="middle" font-family="'Cormorant Garamond',serif"
-        font-size="13.5625"
-        font-weight="600" letter-spacing="4.666666666666667"
-        fill="#2a1e0a">ARCANA</text>
+  <!-- 奶液頂部波浪線 -->
+  <path d="M55 124 Q72 118 100 124 Q128 130 145 124 L145 122 Q128 116 100 122 Q72 128 55 122 Z" fill="#9dd0e8" clip-path="url(#bottleClip)"/>
 
-  <!-- Ornamental divider -->
-  <line x1="91.4" y1="269.656"
-        x2="128.6" y2="269.656"
-        stroke="#2a1e0a" stroke-width="0.5" opacity="0.35"/>
-  <circle cx="110" cy="269.656" r="2" fill="#2a1e0a" opacity="0.3"/>
+  <!-- 刻度線右側（紅色） -->
+  <line x1="122" y1="97"  x2="142" y2="97"  stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="128" y1="110" x2="142" y2="110" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="122" y1="123" x2="142" y2="123" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="128" y1="136" x2="142" y2="136" stroke="#e05050" stroke-width="2.5" stroke-linecap="round"/>
 
-  <!-- Subtitle -->
-  <text x="110" y="294.35200000000003"
-        text-anchor="middle" font-family="'Cormorant Garamond',serif"
-        font-size="5.8125"
-        font-style="italic" letter-spacing="1"
-        fill="#2a1e0a" opacity="0.8">Reserve Cuvée</text>
+  <!-- 瓶頸左右描邊 -->
+  <line x1="78"  y1="57" x2="78"  y2="76" stroke="#a8c4d4" stroke-width="2"/>
+  <line x1="122" y1="57" x2="122" y2="76" stroke="#a8c4d4" stroke-width="2"/>
+  <line x1="78"  y1="75" x2="122" y2="75" stroke="#a8c4d4" stroke-width="1.5"/>
 
-  <!-- Vintage / note -->
-  <text x="110" y="324.53600000000006"
-        text-anchor="middle" font-family="'Cormorant Garamond',serif"
-        font-size="10" letter-spacing="5"
-        fill="#2a1e0a" opacity="0.55">2024</text>
-
-  <!-- Lower label rule -->
-  <line x1="95.46875" y1="336.884"
-        x2="124.53125" y2="336.884"
-        stroke="#2a1e0a" stroke-width="0.4" opacity="0.25"/>
-
-  <!-- Bottle outline stroke (on top) -->
-  <path d="
-    M 110 82
-    L 98 84
-    L 95 100
-    L 95 176
-    Q 86 185
-      72.5 194
-    L 72.5 384
-    Q 72.5 390 78.5 390
-    L 141.5 390
-    Q 147.5 390 147.5 384
-    L 147.5 194
-    Q 134 185
-      125 176
-    L 125 100
-    L 122 84
-    Z
-  " fill="none" stroke="#0c3c18" stroke-width="1" opacity="0.6"/>
-
-  
-      <!-- Screw cap -->
-      <rect x="99.5" y="62" width="21" height="22"
-            rx="3" fill="#669672" stroke="#0c3c18" stroke-width="1"/>
-      <line x1="99.5" y1="68" x2="120.5" y2="68"
-            stroke="#0c3c18" stroke-width="0.6" opacity="0.6"/>
-      <line x1="99.5" y1="74" x2="120.5" y2="74"
-            stroke="#0c3c18" stroke-width="0.6" opacity="0.6"/>
-    
+  <!-- 高光（左上橢圓） -->
+  <ellipse cx="72" cy="98" rx="7" ry="18" fill="white" opacity="0.45"/>
 </svg>
