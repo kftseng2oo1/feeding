@@ -17,7 +17,8 @@
 <!-- 安全區域（iPhone 劉海/底部手勢條） -->
 <meta name="mobile-web-app-capable" content="yes">
 
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<!-- 字型：線上載入 Noto Serif TC，離線/本機自動降版為系統字型 -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500&family=Lato:wght@300;400&display=swap" rel="stylesheet" crossorigin="anonymous" onerror="this.remove()">
 <style>
   :root {
     --cream: #fdf6ee; --blush: #f5ddd4; --rose: #e8b4a0; --mauve: #c98b7a;
@@ -27,7 +28,7 @@
     --shadow: rgba(122,79,61,0.12);
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--cream);font-family:'Lato','Noto Serif TC',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+  body{background:var(--cream);font-family:'Lato','Noto Serif TC',-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
   body::before{content:'';position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(245,221,212,0.5) 0%,transparent 70%);pointer-events:none;z-index:0;}
   body::after{content:'';position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(181,196,177,0.4) 0%,transparent 70%);pointer-events:none;z-index:0;}
   .app{max-width:480px;margin:0 auto;padding:0 0 100px;position:relative;z-index:1;}
@@ -276,6 +277,42 @@
         <div style="display:flex;gap:10px;justify-content:center;">
           <button onclick="dismissAlarm()" class="btn btn-success" style="padding:12px 28px;font-size:0.95rem;">✅ 知道了</button>
           <button onclick="snoozeAlarm()" class="btn btn-secondary" style="padding:12px 20px;font-size:0.95rem;">💤 再 5 分鐘</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 手機鬧鐘提示彈窗 -->
+    <div id="clock-hint-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;align-items:center;justify-content:center;">
+      <div style="background:var(--white);border-radius:28px;padding:28px 22px;margin:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:fadeUp 0.3s ease both;max-width:320px;width:100%;">
+        <div style="font-size:2.4rem;margin-bottom:10px;">⏰</div>
+        <div style="font-size:1.05rem;font-weight:600;color:var(--deep);margin-bottom:14px;">設定手機鬧鐘</div>
+
+        <!-- 時間顯示 + 複製 -->
+        <div style="background:var(--blush);border-radius:16px;padding:14px;margin-bottom:14px;">
+          <div style="font-size:0.75rem;color:var(--light-text);margin-bottom:4px;">下次餵奶時間</div>
+          <div style="font-size:2.2rem;font-weight:300;color:var(--mauve);letter-spacing:2px;" id="clock-hint-time">--:--</div>
+          <button onclick="copyAlarmTime()" id="copy-btn" style="margin-top:8px;background:var(--mauve);color:white;border:none;border-radius:30px;padding:7px 20px;font-size:0.8rem;cursor:pointer;">
+            📋 複製時間
+          </button>
+        </div>
+
+        <!-- 步驟說明 -->
+        <div style="text-align:left;background:#f9f6f3;border-radius:14px;padding:12px 14px;margin-bottom:16px;font-size:0.78rem;color:var(--light-text);line-height:1.9;">
+          <div style="font-weight:600;color:var(--deep);margin-bottom:4px;">設定步驟：</div>
+          <div>① 點「📋 複製時間」</div>
+          <div>② 按手機下方 Home 鍵或上滑回主畫面</div>
+          <div>③ 找到並開啟<b style="color:var(--deep);">「時鐘」App</b></div>
+          <div>④ 選「鬧鐘」→ 右上角 <b style="color:var(--deep);">＋</b></div>
+          <div>⑤ 輸入複製的時間，儲存</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button onclick="copyAndHint()" style="background:var(--rose);color:white;border:none;border-radius:50px;padding:13px;font-size:0.9rem;cursor:pointer;font-weight:500;" id="copy-go-btn">
+            📋 複製時間，去設定鬧鐘
+          </button>
+          <button onclick="document.getElementById('clock-hint-overlay').style.display='none'" style="background:transparent;color:var(--light-text);border:none;padding:8px;font-size:0.82rem;cursor:pointer;">
+            稍後自行設定
+          </button>
         </div>
       </div>
     </div>
@@ -779,7 +816,19 @@ function toggleAlarm(){
     slash.style.display = 'none';
     status.style.display = 'block';
     if('Notification' in window && Notification.permission === 'default'){
-      Notification.requestPermission();
+      Notification.requestPermission().then(p=>{
+        if(p==='granted'){
+          // 權限剛授權，補排當前倒數的通知
+          const last = bottleRecords[0];
+          const iv = parseFloat(document.getElementById('interval-hours').value);
+          if(last && iv) scheduleNotification(last.ts + iv * 3600000);
+        }
+      });
+    } else if(Notification.permission === 'granted'){
+      // 已有權限，直接補排
+      const last = bottleRecords[0];
+      const iv = parseFloat(document.getElementById('interval-hours').value);
+      if(last && iv) scheduleNotification(last.ts + iv * 3600000);
     }
     showToast('🔔 提醒已開啟');
   } else {
@@ -789,6 +838,7 @@ function toggleAlarm(){
     stopAlarmSound();
     stopKeepAlive();
     clearTimeout(snoozeTimeout);
+    clearTimeout(scheduledNotifTimeout);
     alarmFired = false;
     snoozeUntil = null;
     showToast('🔕 提醒已關閉');
@@ -909,6 +959,37 @@ function tickCD(hrs){
   }
 }
 
+// ── 預排系統通知（背景提醒核心）─────────────────────
+let scheduledNotifTimeout = null;
+
+function scheduleNotification(nextTs){
+  // 清除上一次排程
+  clearTimeout(scheduledNotifTimeout);
+  if(!alarmOn) return;
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const delay = nextTs - Date.now();
+  if(delay <= 0) return; // 已經過了
+
+  const nextTime = new Date(nextTs).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+  scheduledNotifTimeout = setTimeout(()=>{
+    // App 在前景：由 tickCD 處理（有聲音 + 彈窗）
+    // App 在背景：發系統通知（有系統通知聲）
+    if(document.visibilityState === 'hidden'){
+      new Notification('🍼 餵奶時間到了！', {
+        body: '距上次餵奶已達設定間隔，準備餵奶吧 🌸',
+        icon: './icons/icon-192.png',
+        tag: 'nursing-alarm',
+        renotify: true,
+        requireInteraction: true   // 通知不自動消失，需手動關閉
+      });
+    }
+    // 若 App 在前景，tickCD 的 setInterval 會處理彈窗 + 聲音，不重複發通知
+  }, delay);
+
+  showToast('🔔 已排定 '+nextTime+' 提醒');
+}
+
 // ── Save Bottle ───────────────────────────────────────
 function saveBottleRecord(){
   const cc=parseInt(document.getElementById('actual-cc').value);
@@ -931,6 +1012,60 @@ function saveBottleRecord(){
   for(let o of selH.options){if(parseFloat(o.value)===interval){selH.value=o.value;break;}}
   updateCountdown();
   updateSummary();
+  // 預排背景通知
+  if(alarmOn){
+    const nextTs = now.getTime() + interval * 3600000;
+    scheduleNotification(nextTs);
+  }
+  // 顯示手機鬧鐘提示
+  showClockHint(now.getTime() + interval * 3600000);
+}
+
+// ── 手機鬧鐘提示 ──────────────────────────────────────
+let _hintTimeStr = '';
+
+function showClockHint(nextTs){
+  const t = new Date(nextTs);
+  _hintTimeStr = t.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('clock-hint-time').textContent = _hintTimeStr;
+  document.getElementById('clock-hint-overlay').style.display = 'flex';
+  // 重置複製按鈕
+  const btn = document.getElementById('copy-btn');
+  if(btn){ btn.textContent = '📋 複製時間'; btn.style.background = 'var(--mauve)'; }
+}
+
+function copyAlarmTime(){
+  const btn = document.getElementById('copy-btn');
+  navigator.clipboard.writeText(_hintTimeStr).then(()=>{
+    btn.textContent = '✅ 已複製！';
+    btn.style.background = 'var(--sage-dark)';
+  }).catch(()=>{
+    // 降版：選取文字
+    const el = document.getElementById('clock-hint-time');
+    const range = document.createRange();
+    range.selectNode(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    btn.textContent = '✅ 請長按複製';
+    btn.style.background = 'var(--sage-dark)';
+  });
+}
+
+function copyAndHint(){
+  const btn = document.getElementById('copy-go-btn');
+  navigator.clipboard.writeText(_hintTimeStr).then(()=>{
+    btn.textContent = '✅ 已複製！請切換到時鐘 App';
+    btn.style.background = 'var(--sage-dark)';
+  }).catch(()=>{
+    // 降版處理
+    const el = document.getElementById('clock-hint-time');
+    const range = document.createRange();
+    range.selectNode(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    btn.textContent = '✅ 請長按時間文字複製';
+    btn.style.background = 'var(--sage-dark)';
+  });
 }
 
 // ── Summary ───────────────────────────────────────────
@@ -1050,42 +1185,13 @@ if('serviceWorker' in navigator){
   });
 }
 
-// ── PWA 安裝提示 ──────────────────────────────────────
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e=>{
-  e.preventDefault();
-  deferredPrompt = e;
-  // 顯示安裝橫幅（Android Chrome）
-  const banner = document.getElementById('pwa-banner');
-  if(banner) banner.style.display='flex';
-});
-
-function installPWA(){
-  const banner = document.getElementById('pwa-banner');
-  if(deferredPrompt){
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(()=>{
-      deferredPrompt=null;
-      if(banner) banner.style.display='none';
-    });
-  }
-}
-
 window.addEventListener('appinstalled', ()=>{
-  const banner = document.getElementById('pwa-banner');
-  if(banner) banner.style.display='none';
   showToast('🎉 已成功加入主畫面！');
 });
 </script>
 
 <!-- PWA 安裝橫幅 -->
-<div id="pwa-banner">
-  <span>🌙 加到主畫面，離線也能用！</span>
-  <div style="display:flex;gap:8px;flex-shrink:0;">
-    <button onclick="installPWA()" style="background:var(--rose);color:white;border:none;border-radius:20px;padding:7px 16px;font-family:'Noto Serif TC',serif;font-size:0.8rem;cursor:pointer;white-space:nowrap;">📲 安裝</button>
-    <button onclick="document.getElementById('pwa-banner').style.display='none'" style="background:rgba(255,255,255,0.2);color:white;border:none;border-radius:20px;padding:7px 12px;font-size:0.85rem;cursor:pointer;">✕</button>
-  </div>
-</div>
+
 
 </body>
 </html>
