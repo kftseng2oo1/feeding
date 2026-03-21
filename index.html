@@ -446,6 +446,12 @@ let selectedBreast = null;
 let timerInterval=null, timerRunning=false, timerSeconds=0, timerStartTime=null;
 let countdownInterval=null;
 
+// ── 第一次用戶互動時預熱 AudioContext ─────────────────
+document.addEventListener('click', function initAudio(){
+  getAudioCtx();
+  if(alarmOn) startKeepAlive();
+}, { once: true });
+
 // ── Tabs ──────────────────────────────────────────────
 function switchTab(t) {
   const names=['record','bottle','history','stats'];
@@ -762,12 +768,13 @@ function stopAlarmSound(){
 
 function toggleAlarm(){
   alarmOn = !alarmOn;
+  localStorage.setItem('alarm_on', alarmOn ? '1' : '0'); // 記住開關狀態
   const btn    = document.getElementById('alarm-btn');
   const slash  = document.getElementById('alarm-slash');
   const status = document.getElementById('alarm-status');
   if(alarmOn){
-    getAudioCtx();       // 在用戶點擊時建立 AudioContext
-    startKeepAlive();    // 持續靜音保活，snooze 後仍有聲音
+    getAudioCtx();
+    startKeepAlive();
     btn.classList.add('alarm-on');
     slash.style.display = 'none';
     status.style.display = 'block';
@@ -1024,6 +1031,15 @@ const now=new Date();
 document.getElementById('filter-date').value=
   `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
 setInterval(updateSummary,60000);
+
+// ── 恢復鬧鐘開關狀態 ─────────────────────────────────
+if(localStorage.getItem('alarm_on') === '1'){
+  alarmOn = true;
+  document.getElementById('alarm-btn').classList.add('alarm-on');
+  document.getElementById('alarm-slash').style.display = 'none';
+  document.getElementById('alarm-status').style.display = 'block';
+  // AudioContext 需要等用戶互動才能建立（由上方 click 監聽器處理）
+}
 
 // ── PWA Service Worker ────────────────────────────────
 if('serviceWorker' in navigator){
