@@ -1233,9 +1233,10 @@ function saveBottleRecord(){
   for(let o of selH.options){if(parseFloat(o.value)===interval){selH.value=o.value;break;}}
   updateCountdown();
   updateSummary();
+  // 計算下次餵奶時間
+  const nextTs = now.getTime() + interval * 3600000;
   // 預排背景通知
   if(alarmOn){
-    const nextTs = now.getTime() + interval * 3600000;
     scheduleNotification(nextTs);
   }
   // Line / Email 外部通知排程
