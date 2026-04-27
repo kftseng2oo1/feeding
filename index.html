@@ -491,16 +491,20 @@
       <div style="font-size:0.75rem;color:var(--light-text);">儲存紀錄後計時器也會自動 reset</div>
     </div>
 
-    <!-- Line Notify -->
+    <!-- LINE Messaging API -->
     <div class="card">
-      <div class="card-title">💬 Line Notify 通知</div>
+      <div class="card-title">💬 LINE 通知設定</div>
       <div style="font-size:0.78rem;color:var(--light-text);margin-bottom:12px;line-height:1.6;">
-        餵奶時間前 30 分鐘 + 時間到，自動發送 Line 通知。<br>
-        需先到 <b>notify.line.me</b> 申請 Token。
+        使用 LINE Messaging API 發送餵奶提醒通知。
       </div>
       <div style="margin-bottom:10px;">
-        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">Line Notify Token</label>
-        <input type="password" class="inp" id="line-token" placeholder="貼上你的 Token" style="width:100%;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">Channel Access Token</label>
+        <input type="password" class="inp" id="line-token" placeholder="貼上新的 Channel Access Token" style="width:100%;">
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">接收通知的 LINE User ID</label>
+        <input type="text" class="inp" id="line-user-id" placeholder="U1e68f3c5a36277ff789c0f4458612d98" style="width:100%;">
+        <div style="font-size:0.7rem;color:var(--light-text);margin-top:3px;">LINE Developers Console → Basic settings → Your user ID</div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <button onclick="testLineNotify()" class="btn btn-secondary" style="flex:1;font-size:0.82rem;">📨 測試發送</button>
@@ -1083,6 +1087,7 @@ function scheduleNotification(nextTs){
 function loadSettings(){
   const s = JSON.parse(localStorage.getItem('app_settings')||'{}');
   if(s.lineToken)   document.getElementById('line-token').value = s.lineToken;
+  if(s.lineUserId)  document.getElementById('line-user-id').value = s.lineUserId;
   if(s.email)       document.getElementById('notify-email').value = s.email;
   if(s.ejService)   document.getElementById('emailjs-service').value = s.ejService;
   if(s.ejTemplate)  document.getElementById('emailjs-template').value = s.ejTemplate;
@@ -1095,6 +1100,7 @@ function loadSettings(){
 function saveSettings(){
   const s = {
     lineToken:   document.getElementById('line-token').value.trim(),
+    lineUserId:  document.getElementById('line-user-id').value.trim(),
     email:       document.getElementById('notify-email').value.trim(),
     ejService:   document.getElementById('emailjs-service').value.trim(),
     ejTemplate:  document.getElementById('emailjs-template').value.trim(),
@@ -1117,13 +1123,17 @@ function getSettings(){
 const LINE_PROXY = 'https://arcar.kftseng2oo1.workers.dev/line-notify';
 
 async function sendLineNotify(message){
-  const token = getSettings().lineToken;
-  if(!token) return;
+  const s = getSettings();
+  if(!s.lineToken || !s.lineUserId) return false;
   try {
     const res = await fetch(LINE_PROXY, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ token, message })
+      body: JSON.stringify({
+        token:   s.lineToken,
+        userId:  s.lineUserId,
+        message: message
+      })
     });
     return res.ok;
   } catch(e){ return false; }
@@ -1132,11 +1142,11 @@ async function sendLineNotify(message){
 async function testLineNotify(){
   const el = document.getElementById('line-status');
   el.textContent = '發送中…'; el.style.color = 'var(--light-text)';
-  const ok = await sendLineNotify('🍼 餵奶日記測試通知\n這是一則測試訊息！');
+  const ok = await sendLineNotify('🍼 餵奶日記測試通知\n這是一則測試訊息，LINE 通知正常運作！');
   if(ok){
-    el.textContent = '✅ Line 通知發送成功！'; el.style.color = 'var(--sage-dark)';
+    el.textContent = '✅ LINE 通知發送成功！'; el.style.color = 'var(--sage-dark)';
   } else {
-    el.textContent = '❌ 發送失敗，請確認 Token 是否正確'; el.style.color = '#c62828';
+    el.textContent = '❌ 發送失敗，請確認 Token 和 User ID'; el.style.color = '#c62828';
   }
 }
 
