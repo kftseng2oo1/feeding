@@ -1250,8 +1250,22 @@ function saveBottleRecord(){
 async function sendConfirmNotify(nextTs){
   const nextTime = new Date(nextTs).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
   const msg = `✅ 餵奶紀錄已儲存\n下次餵奶時間：${nextTime}\n時間到前 30 分鐘會再提醒您 🌙`;
-  sendLineNotify(msg);
-  sendEmail('✅ 餵奶紀錄已儲存', msg);
+  const s = getSettings();
+  // 檢查設定是否存在
+  if(!s.lineToken && !s.email){
+    showToast('⚠️ 請先到設定填入 LINE Token 或 Email');
+    return;
+  }
+  const results = await Promise.all([
+    s.lineToken ? sendLineNotify(msg) : Promise.resolve(null),
+    s.email     ? sendEmail('✅ 餵奶紀錄已儲存', msg) : Promise.resolve(null),
+  ]);
+  const lineOk  = results[0];
+  const emailOk = results[1];
+  if(lineOk)  showToast('📱 LINE 通知已發送！');
+  if(emailOk) showToast('📧 Email 通知已發送！');
+  if(lineOk===false)  showToast('⚠️ LINE 發送失敗，請檢查設定');
+  if(emailOk===false) showToast('⚠️ Email 發送失敗，請檢查設定');
 }
 
 // ── 手機鬧鐘提示 ──────────────────────────────────────
