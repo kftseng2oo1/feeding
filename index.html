@@ -1013,8 +1013,10 @@ function tickCD(hrs){
   const diffMs=nextTs-Date.now();
   const totalSecs=Math.round(diffMs/1000);
 
+  // ── 主動檢查外部通知（LINE / Email）──
+  checkExternalNotify(nextTs);
+
   // ── 鬧鐘觸發邏輯 ──
-  // 只有在：時間到、提醒開啟、未在響、且這個 nextTs 尚未被 dismiss 過
   if(totalSecs<=0 && alarmOn && !alarmFired && alarmDismissedTs !== nextTs){
     if(snoozeUntil){
       if(Date.now() >= snoozeUntil){ snoozeUntil=null; fireAlarm(); }
@@ -1024,11 +1026,15 @@ function tickCD(hrs){
   }
 
   if(totalSecs<=0){
-    const overSecs=Math.abs(totalSecs);
-    const oh=Math.floor(overSecs/3600), om=Math.floor((overSecs%3600)/60), os=overSecs%60;
-    disp.textContent=(oh>0?oh+' 時 ':'')+(om>0?om+' 分 ':'')+os+' 秒 前';
+    // 時間到：顯示「可以餵奶」並停止倒數顯示
     disp.classList.add('overdue');
-    nxt.textContent= alarmDismissedTs===nextTs ? '✅ 已確認，等下次餵奶' : '⚠️ 可以餵奶囉！';
+    if(alarmDismissedTs===nextTs){
+      disp.textContent='等待下次';
+      nxt.textContent='✅ 已確認，等下次餵奶';
+    } else {
+      disp.textContent='餵奶時間到！';
+      nxt.textContent='⚠️ 可以餵奶囉，請儲存紀錄';
+    }
   } else {
     disp.classList.remove('overdue');
     const h=Math.floor(totalSecs/3600);
@@ -1157,38 +1163,51 @@ async function testEmail(){
   }
 }
 
-// ── 整合通知（餵奶時間排程）────────────────────────────
-let notif30Timeout = null;
-let notifOntimeTimeout = null;
+// ── 整合通知（改用 localStorage 儲存目標時間，tickCD 主動檢查）──
+// 解決 iOS setTimeout 在背景被暫停的問題
 
 function scheduleExternalNotify(nextTs){
-  clearTimeout(notif30Timeout);
-  clearTimeout(notifOntimeTimeout);
   const s = getSettings();
   const nextTime = new Date(nextTs).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
 
+  // 把通知計畫存入 localStorage，tickCD 每秒主動檢查
+  const plan = {
+    nextTs,
+    notify30: s.notif30min !== false,
+    notifyOntime: s.notifOntime !== false,
+    sent30: false,
+    sentOntime: false,
+  };
+  localStorage.setItem('notify_plan', JSON.stringify(plan));
+}
+
+// 由 tickCD 每秒呼叫，主動檢查是否需要發通知
+async function checkExternalNotify(nextTs){
+  const raw = localStorage.getItem('notify_plan');
+  if(!raw) return;
+  let plan;
+  try { plan = JSON.parse(raw); } catch { return; }
+  if(plan.nextTs !== nextTs) return; // 不同次紀錄，略過
+
+  const now = Date.now();
+  const nextTime = new Date(nextTs).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+
   // 提前 30 分鐘
-  if(s.notif30min !== false){
-    const delay30 = nextTs - 30*60*1000 - Date.now();
-    if(delay30 > 0){
-      notif30Timeout = setTimeout(async ()=>{
-        const msg = `🍼 餵奶提醒\n距離下次餵奶還有 30 分鐘\n預定時間：${nextTime}`;
-        sendLineNotify(msg);
-        sendEmail('🍼 餵奶提醒（30分鐘前）', msg);
-      }, delay30);
-    }
+  if(plan.notify30 && !plan.sent30 && now >= nextTs - 30*60*1000){
+    plan.sent30 = true;
+    localStorage.setItem('notify_plan', JSON.stringify(plan));
+    const msg = `🍼 餵奶提醒\n距離下次餵奶還有 30 分鐘\n預定時間：${nextTime}`;
+    sendLineNotify(msg);
+    sendEmail('🍼 餵奶提醒（30分鐘前）', msg);
   }
 
   // 時間到當下
-  if(s.notifOntime !== false){
-    const delayOn = nextTs - Date.now();
-    if(delayOn > 0){
-      notifOntimeTimeout = setTimeout(async ()=>{
-        const msg = `🍼 餵奶時間到了！\n現在是 ${nextTime}，寶寶肚子餓囉 🌸`;
-        sendLineNotify(msg);
-        sendEmail('🍼 餵奶時間到了！', msg);
-      }, delayOn);
-    }
+  if(plan.notifyOntime && !plan.sentOntime && now >= nextTs){
+    plan.sentOntime = true;
+    localStorage.setItem('notify_plan', JSON.stringify(plan));
+    const msg = `🍼 餵奶時間到了！\n現在是 ${nextTime}，寶寶肚子餓囉 🌸`;
+    sendLineNotify(msg);
+    sendEmail('🍼 餵奶時間到了！', msg);
   }
 }
 
@@ -1219,11 +1238,20 @@ function saveBottleRecord(){
     const nextTs = now.getTime() + interval * 3600000;
     scheduleNotification(nextTs);
   }
-  // Line / Email 外部通知
-  const nextTs = now.getTime() + interval * 3600000;
+  // Line / Email 外部通知排程
   scheduleExternalNotify(nextTs);
+  // 立即發確認通知
+  sendConfirmNotify(nextTs);
   // 顯示手機鬧鐘提示
   showClockHint(nextTs);
+}
+
+// 儲存後立即發送確認通知
+async function sendConfirmNotify(nextTs){
+  const nextTime = new Date(nextTs).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+  const msg = `✅ 餵奶紀錄已儲存\n下次餵奶時間：${nextTime}\n時間到前 30 分鐘會再提醒您 🌙`;
+  sendLineNotify(msg);
+  sendEmail('✅ 餵奶紀錄已儲存', msg);
 }
 
 // ── 手機鬧鐘提示 ──────────────────────────────────────
