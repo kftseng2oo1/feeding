@@ -162,6 +162,7 @@
     <button class="tab" onclick="switchTab('bottle')">🍼 奶瓶</button>
     <button class="tab" onclick="switchTab('history')">📋 歷史</button>
     <button class="tab" onclick="switchTab('stats')">📊 統計</button>
+    <button class="tab" onclick="switchTab('settings')">⚙️ 設定</button>
   </div>
 
   <!-- ══ 親餵 ══ -->
@@ -471,6 +472,87 @@
     </div>
   </div>
 
+  <!-- ══ 設定 ══ -->
+  <div class="panel" id="panel-settings">
+
+    <!-- 計時器設定 -->
+    <div class="card">
+      <div class="card-title">⏱ 計時器設定</div>
+      <div class="s-row" style="margin-bottom:10px;">
+        <span class="s-label">超過幾小時自動 reset</span>
+        <select class="inp" id="timer-max-hours" style="width:90px;padding:6px 10px;" onchange="saveSettings()">
+          <option value="2">2 小時</option>
+          <option value="3">3 小時</option>
+          <option value="4" selected>4 小時</option>
+          <option value="6">6 小時</option>
+          <option value="0">不限制</option>
+        </select>
+      </div>
+      <div style="font-size:0.75rem;color:var(--light-text);">儲存紀錄後計時器也會自動 reset</div>
+    </div>
+
+    <!-- Line Notify -->
+    <div class="card">
+      <div class="card-title">💬 Line Notify 通知</div>
+      <div style="font-size:0.78rem;color:var(--light-text);margin-bottom:12px;line-height:1.6;">
+        餵奶時間前 30 分鐘 + 時間到，自動發送 Line 通知。<br>
+        需先到 <b>notify.line.me</b> 申請 Token。
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">Line Notify Token</label>
+        <input type="password" class="inp" id="line-token" placeholder="貼上你的 Token" style="width:100%;">
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button onclick="testLineNotify()" class="btn btn-secondary" style="flex:1;font-size:0.82rem;">📨 測試發送</button>
+        <button onclick="saveSettings()" class="btn btn-success" style="flex:1;font-size:0.82rem;">💾 儲存</button>
+      </div>
+      <div id="line-status" style="font-size:0.75rem;text-align:center;color:var(--light-text);min-height:18px;"></div>
+    </div>
+
+    <!-- Email 通知 -->
+    <div class="card">
+      <div class="card-title">📧 Email 通知</div>
+      <div style="font-size:0.78rem;color:var(--light-text);margin-bottom:12px;line-height:1.6;">
+        透過 EmailJS 免費服務發送。需先到 <b>emailjs.com</b> 註冊並建立模板。
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">收件 Email</label>
+        <input type="email" class="inp" id="notify-email" placeholder="your@email.com" style="width:100%;">
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">EmailJS Service ID</label>
+        <input type="text" class="inp" id="emailjs-service" placeholder="service_xxxxxxx" style="width:100%;">
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">EmailJS Template ID</label>
+        <input type="text" class="inp" id="emailjs-template" placeholder="template_xxxxxxx" style="width:100%;">
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">EmailJS Public Key</label>
+        <input type="text" class="inp" id="emailjs-pubkey" placeholder="Public Key" style="width:100%;">
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button onclick="testEmail()" class="btn btn-secondary" style="flex:1;font-size:0.82rem;">📨 測試發送</button>
+        <button onclick="saveSettings()" class="btn btn-success" style="flex:1;font-size:0.82rem;">💾 儲存</button>
+      </div>
+      <div id="email-status" style="font-size:0.75rem;text-align:center;color:var(--light-text);min-height:18px;"></div>
+    </div>
+
+    <!-- 通知時機 -->
+    <div class="card">
+      <div class="card-title">🔔 通知時機</div>
+      <label style="display:flex;align-items:center;gap:10px;padding:8px 0;font-size:0.85rem;cursor:pointer;">
+        <input type="checkbox" id="notif-30min" onchange="saveSettings()" style="width:18px;height:18px;accent-color:var(--mauve);">
+        提前 30 分鐘通知
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:8px 0;font-size:0.85rem;cursor:pointer;">
+        <input type="checkbox" id="notif-ontime" checked onchange="saveSettings()" style="width:18px;height:18px;accent-color:var(--mauve);">
+        時間到當下通知
+      </label>
+    </div>
+
+  </div>
+
   <div style="height:20px;"></div>
 </div>
 <div class="toast" id="toast"></div>
@@ -491,7 +573,7 @@ document.addEventListener('click', function initAudio(){
 
 // ── Tabs ──────────────────────────────────────────────
 function switchTab(t) {
-  const names=['record','bottle','history','stats'];
+  const names=['record','bottle','history','stats','settings'];
   document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',names[i]===t));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+t).classList.add('active');
@@ -600,6 +682,13 @@ function rafTimer(){
   timerSeconds=Math.floor((Date.now()-timerStartTime)/1000);
   document.getElementById('timer-display').textContent=
     String(Math.floor(timerSeconds/60)).padStart(2,'0')+':'+String(timerSeconds%60).padStart(2,'0');
+  // 超過設定時數自動 reset
+  const maxH = parseInt(localStorage.getItem('setting_timer_max_hours')||'4');
+  if(maxH > 0 && timerSeconds >= maxH * 3600){
+    resetTimer();
+    showToast('⏱ 計時超過 '+maxH+' 小時，已自動 reset');
+    return;
+  }
   requestAnimationFrame(rafTimer);
 }
 function updateTimer(){ rafTimer(); }
@@ -685,7 +774,7 @@ function saveRecord(){
     date:now.toLocaleDateString('zh-TW'),
     time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),ts:now.getTime()});
   saveAll();updateSummary();showToast('親餵紀錄已儲存 ✨');
-  // Reset everything
+  // 儲存後自動 reset 計時器
   resetTimer();
   resetSideTimer('left');
   resetSideTimer('right');
@@ -990,6 +1079,137 @@ function scheduleNotification(nextTs){
   showToast('🔔 已排定 '+nextTime+' 提醒');
 }
 
+// ── Settings ──────────────────────────────────────────
+function loadSettings(){
+  const s = JSON.parse(localStorage.getItem('app_settings')||'{}');
+  if(s.lineToken)   document.getElementById('line-token').value = s.lineToken;
+  if(s.email)       document.getElementById('notify-email').value = s.email;
+  if(s.ejService)   document.getElementById('emailjs-service').value = s.ejService;
+  if(s.ejTemplate)  document.getElementById('emailjs-template').value = s.ejTemplate;
+  if(s.ejPubKey)    document.getElementById('emailjs-pubkey').value = s.ejPubKey;
+  if(s.timerMaxH)   document.getElementById('timer-max-hours').value = s.timerMaxH;
+  document.getElementById('notif-30min').checked  = s.notif30min !== false;
+  document.getElementById('notif-ontime').checked = s.notifOntime !== false;
+}
+
+function saveSettings(){
+  const s = {
+    lineToken:   document.getElementById('line-token').value.trim(),
+    email:       document.getElementById('notify-email').value.trim(),
+    ejService:   document.getElementById('emailjs-service').value.trim(),
+    ejTemplate:  document.getElementById('emailjs-template').value.trim(),
+    ejPubKey:    document.getElementById('emailjs-pubkey').value.trim(),
+    timerMaxH:   document.getElementById('timer-max-hours').value,
+    notif30min:  document.getElementById('notif-30min').checked,
+    notifOntime: document.getElementById('notif-ontime').checked,
+  };
+  localStorage.setItem('app_settings', JSON.stringify(s));
+  localStorage.setItem('setting_timer_max_hours', s.timerMaxH);
+  showToast('✅ 設定已儲存');
+}
+
+function getSettings(){
+  return JSON.parse(localStorage.getItem('app_settings')||'{}');
+}
+
+// ── Line Notify ───────────────────────────────────────
+// 透過 Cloudflare Worker 代理避免 CORS
+const LINE_PROXY = 'https://arcar.kftseng2oo1.workers.dev/line-notify';
+
+async function sendLineNotify(message){
+  const token = getSettings().lineToken;
+  if(!token) return;
+  try {
+    const res = await fetch(LINE_PROXY, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ token, message })
+    });
+    return res.ok;
+  } catch(e){ return false; }
+}
+
+async function testLineNotify(){
+  const el = document.getElementById('line-status');
+  el.textContent = '發送中…'; el.style.color = 'var(--light-text)';
+  const ok = await sendLineNotify('🍼 餵奶日記測試通知\n這是一則測試訊息！');
+  if(ok){
+    el.textContent = '✅ Line 通知發送成功！'; el.style.color = 'var(--sage-dark)';
+  } else {
+    el.textContent = '❌ 發送失敗，請確認 Token 是否正確'; el.style.color = '#c62828';
+  }
+}
+
+// ── Email (EmailJS) ───────────────────────────────────
+async function sendEmail(subject, body){
+  const s = getSettings();
+  if(!s.email || !s.ejService || !s.ejTemplate || !s.ejPubKey) return false;
+  try {
+    // 動態載入 EmailJS SDK
+    if(!window.emailjs){
+      await new Promise((res,rej)=>{
+        const sc = document.createElement('script');
+        sc.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+        sc.onload = res; sc.onerror = rej;
+        document.head.appendChild(sc);
+      });
+      window.emailjs.init({ publicKey: s.ejPubKey });
+    }
+    await window.emailjs.send(s.ejService, s.ejTemplate, {
+      to_email: s.email,
+      subject:  subject,
+      message:  body,
+    });
+    return true;
+  } catch(e){ console.error(e); return false; }
+}
+
+async function testEmail(){
+  const el = document.getElementById('email-status');
+  el.textContent = '發送中…'; el.style.color = 'var(--light-text)';
+  const ok = await sendEmail('🍼 餵奶日記測試', '這是來自餵奶日記的測試郵件！');
+  if(ok){
+    el.textContent = '✅ Email 發送成功！'; el.style.color = 'var(--sage-dark)';
+  } else {
+    el.textContent = '❌ 發送失敗，請確認 EmailJS 設定'; el.style.color = '#c62828';
+  }
+}
+
+// ── 整合通知（餵奶時間排程）────────────────────────────
+let notif30Timeout = null;
+let notifOntimeTimeout = null;
+
+function scheduleExternalNotify(nextTs){
+  clearTimeout(notif30Timeout);
+  clearTimeout(notifOntimeTimeout);
+  const s = getSettings();
+  const nextTime = new Date(nextTs).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+
+  // 提前 30 分鐘
+  if(s.notif30min !== false){
+    const delay30 = nextTs - 30*60*1000 - Date.now();
+    if(delay30 > 0){
+      notif30Timeout = setTimeout(async ()=>{
+        const msg = `🍼 餵奶提醒\n距離下次餵奶還有 30 分鐘\n預定時間：${nextTime}`;
+        sendLineNotify(msg);
+        sendEmail('🍼 餵奶提醒（30分鐘前）', msg);
+      }, delay30);
+    }
+  }
+
+  // 時間到當下
+  if(s.notifOntime !== false){
+    const delayOn = nextTs - Date.now();
+    if(delayOn > 0){
+      notifOntimeTimeout = setTimeout(async ()=>{
+        const msg = `🍼 餵奶時間到了！\n現在是 ${nextTime}，寶寶肚子餓囉 🌸`;
+        sendLineNotify(msg);
+        sendEmail('🍼 餵奶時間到了！', msg);
+      }, delayOn);
+    }
+  }
+}
+
 // ── Save Bottle ───────────────────────────────────────
 function saveBottleRecord(){
   const cc=parseInt(document.getElementById('actual-cc').value);
@@ -1017,8 +1237,11 @@ function saveBottleRecord(){
     const nextTs = now.getTime() + interval * 3600000;
     scheduleNotification(nextTs);
   }
+  // Line / Email 外部通知
+  const nextTs = now.getTime() + interval * 3600000;
+  scheduleExternalNotify(nextTs);
   // 顯示手機鬧鐘提示
-  showClockHint(now.getTime() + interval * 3600000);
+  showClockHint(nextTs);
 }
 
 // ── 手機鬧鐘提示 ──────────────────────────────────────
@@ -1175,6 +1398,9 @@ if(localStorage.getItem('alarm_on') === '1'){
   document.getElementById('alarm-status').style.display = 'block';
   // AudioContext 需要等用戶互動才能建立（由上方 click 監聽器處理）
 }
+
+// 載入設定
+loadSettings();
 
 // ── PWA Service Worker ────────────────────────────────
 if('serviceWorker' in navigator){
