@@ -515,25 +515,13 @@
 
     <!-- Email 通知 -->
     <div class="card">
-      <div class="card-title">📧 Email 通知</div>
+      <div class="card-title">📧 Email 通知設定</div>
       <div style="font-size:0.78rem;color:var(--light-text);margin-bottom:12px;line-height:1.6;">
-        透過 EmailJS 免費服務發送。需先到 <b>emailjs.com</b> 註冊並建立模板。
-      </div>
-      <div style="margin-bottom:8px;">
-        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">收件 Email</label>
-        <input type="email" class="inp" id="notify-email" placeholder="your@email.com" style="width:100%;">
-      </div>
-      <div style="margin-bottom:8px;">
-        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">EmailJS Service ID</label>
-        <input type="text" class="inp" id="emailjs-service" placeholder="service_xxxxxxx" style="width:100%;">
-      </div>
-      <div style="margin-bottom:8px;">
-        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">EmailJS Template ID</label>
-        <input type="text" class="inp" id="emailjs-template" placeholder="template_xxxxxxx" style="width:100%;">
+        透過伺服器發送 Email 提醒，只需填入收件信箱即可。
       </div>
       <div style="margin-bottom:10px;">
-        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">EmailJS Public Key</label>
-        <input type="text" class="inp" id="emailjs-pubkey" placeholder="Public Key" style="width:100%;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">收件 Email</label>
+        <input type="email" class="inp" id="notify-email" placeholder="your@email.com" style="width:100%;">
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <button onclick="testEmail()" class="btn btn-secondary" style="flex:1;font-size:0.82rem;">📨 測試發送</button>
@@ -1086,13 +1074,10 @@ function scheduleNotification(nextTs){
 // ── Settings ──────────────────────────────────────────
 function loadSettings(){
   const s = JSON.parse(localStorage.getItem('app_settings')||'{}');
-  if(s.lineToken)   document.getElementById('line-token').value = s.lineToken;
-  if(s.lineUserId)  document.getElementById('line-user-id').value = s.lineUserId;
-  if(s.email)       document.getElementById('notify-email').value = s.email;
-  if(s.ejService)   document.getElementById('emailjs-service').value = s.ejService;
-  if(s.ejTemplate)  document.getElementById('emailjs-template').value = s.ejTemplate;
-  if(s.ejPubKey)    document.getElementById('emailjs-pubkey').value = s.ejPubKey;
-  if(s.timerMaxH)   document.getElementById('timer-max-hours').value = s.timerMaxH;
+  if(s.lineToken)  document.getElementById('line-token').value = s.lineToken;
+  if(s.lineUserId) document.getElementById('line-user-id').value = s.lineUserId;
+  if(s.email)      document.getElementById('notify-email').value = s.email;
+  if(s.timerMaxH)  document.getElementById('timer-max-hours').value = s.timerMaxH;
   document.getElementById('notif-30min').checked  = s.notif30min !== false;
   document.getElementById('notif-ontime').checked = s.notifOntime !== false;
 }
@@ -1102,9 +1087,6 @@ function saveSettings(){
     lineToken:   document.getElementById('line-token').value.trim(),
     lineUserId:  document.getElementById('line-user-id').value.trim(),
     email:       document.getElementById('notify-email').value.trim(),
-    ejService:   document.getElementById('emailjs-service').value.trim(),
-    ejTemplate:  document.getElementById('emailjs-template').value.trim(),
-    ejPubKey:    document.getElementById('emailjs-pubkey').value.trim(),
     timerMaxH:   document.getElementById('timer-max-hours').value,
     notif30min:  document.getElementById('notif-30min').checked,
     notifOntime: document.getElementById('notif-ontime').checked,
@@ -1153,35 +1135,25 @@ async function testLineNotify(){
 // ── Email (EmailJS) ───────────────────────────────────
 async function sendEmail(subject, body){
   const s = getSettings();
-  if(!s.email || !s.ejService || !s.ejTemplate || !s.ejPubKey) return false;
+  if(!s.email) return false;
   try {
-    // 動態載入 EmailJS SDK
-    if(!window.emailjs){
-      await new Promise((res,rej)=>{
-        const sc = document.createElement('script');
-        sc.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
-        sc.onload = res; sc.onerror = rej;
-        document.head.appendChild(sc);
-      });
-      window.emailjs.init({ publicKey: s.ejPubKey });
-    }
-    await window.emailjs.send(s.ejService, s.ejTemplate, {
-      to_email: s.email,
-      subject:  subject,
-      message:  body,
+    const res = await fetch('https://arcar.kftseng2oo1.workers.dev/send-email', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ to: s.email, subject, message: body })
     });
-    return true;
-  } catch(e){ console.error(e); return false; }
+    return res.ok;
+  } catch(e){ return false; }
 }
 
 async function testEmail(){
   const el = document.getElementById('email-status');
   el.textContent = '發送中…'; el.style.color = 'var(--light-text)';
-  const ok = await sendEmail('🍼 餵奶日記測試', '這是來自餵奶日記的測試郵件！');
+  const ok = await sendEmail('🍼 餵奶日記測試', '這是來自餵奶日記的測試郵件，Email 通知正常運作！');
   if(ok){
     el.textContent = '✅ Email 發送成功！'; el.style.color = 'var(--sage-dark)';
   } else {
-    el.textContent = '❌ 發送失敗，請確認 EmailJS 設定'; el.style.color = '#c62828';
+    el.textContent = '❌ 發送失敗，請確認 Email 是否正確'; el.style.color = '#c62828';
   }
 }
 
