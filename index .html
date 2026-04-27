@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>餵奶日記 · 小月亮</title>
+
+<!-- PWA -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#c98b7a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="餵奶日記">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="icon" type="image/png" href="./icons/favicon.png">
+
+<!-- 安全區域（iPhone 劉海/底部手勢條） -->
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- 字型：線上載入 Noto Serif TC，離線/本機自動降版為系統字型 -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500&family=Lato:wght@300;400&display=swap" rel="stylesheet" crossorigin="anonymous" onerror="this.remove()">
+<style>
+  :root {
+    --cream: #fdf6ee; --blush: #f5ddd4; --rose: #e8b4a0; --mauve: #c98b7a;
+    --deep: #7a4f3d; --sage: #b5c4b1; --sage-dark: #7a9c74;
+    --blue: #a8c4d4; --blue-light: #dceef7; --blue-dark: #5a8fa8;
+    --text: #4a3028; --light-text: #9c7060; --white: #fffcf9;
+    --shadow: rgba(122,79,61,0.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--cream);font-family:'Lato','Noto Serif TC',-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(245,221,212,0.5) 0%,transparent 70%);pointer-events:none;z-index:0;}
+  body::after{content:'';position:fixed;bottom:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(181,196,177,0.4) 0%,transparent 70%);pointer-events:none;z-index:0;}
+  .app{max-width:480px;margin:0 auto;padding:0 0 100px;position:relative;z-index:1;}
+  .header{text-align:center;padding:36px 20px 20px;animation:fadeDown 0.8s ease both;}
+  .header-icon{font-size:2.2rem;display:block;margin-bottom:8px;animation:float 3s ease-in-out infinite;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .header h1{font-family:'Noto Serif TC',serif;font-weight:300;font-size:1.6rem;color:var(--deep);letter-spacing:0.08em;}
+  .header p{font-size:0.78rem;color:var(--light-text);margin-top:4px;}
+  .tabs{display:flex;margin:0 16px 20px;background:var(--white);border-radius:20px;padding:4px;box-shadow:0 2px 12px var(--shadow);animation:fadeUp 0.8s ease 0.2s both;}
+  .tab{flex:1;padding:9px 4px;border:none;background:none;border-radius:16px;font-size:0.72rem;font-family:'Noto Serif TC',serif;color:var(--light-text);cursor:pointer;transition:all 0.3s;}
+  .tab.active{background:var(--blush);color:var(--deep);font-weight:500;}
+  .panel{display:none;}.panel.active{display:block;animation:fadeUp 0.4s ease both;}
+  .card{background:var(--white);border-radius:24px;padding:22px 18px;margin:0 16px 14px;box-shadow:0 4px 20px var(--shadow);}
+  .card-title{font-family:'Noto Serif TC',serif;font-size:0.82rem;color:var(--light-text);letter-spacing:0.1em;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+  .summary-strip{display:flex;gap:10px;margin:0 16px 14px;animation:fadeUp 0.8s ease 0.4s both;}
+  .summary-chip{flex:1;background:var(--white);border-radius:16px;padding:12px 8px;text-align:center;box-shadow:0 2px 10px var(--shadow);}
+  .summary-chip .num{font-size:1.35rem;font-weight:300;color:var(--deep);font-family:'Lato',sans-serif;}
+  .summary-chip .lbl{font-size:0.66rem;color:var(--light-text);margin-top:2px;font-family:'Noto Serif TC',serif;}
+  .breast-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .breast-btn{padding:14px 8px 10px;border:2px solid var(--blush);background:none;border-radius:20px;cursor:pointer;font-family:'Noto Serif TC',serif;font-size:0.88rem;color:var(--rose);transition:all 0.3s;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .breast-btn .bside-label{font-size:0.78rem;color:var(--light-text);margin-top:2px;}
+  .breast-btn.selected{border-color:var(--rose);background:linear-gradient(160deg,#fff0eb,#fce8e0);color:var(--mauve);transform:scale(1.03);box-shadow:0 6px 18px rgba(232,180,160,0.35);}
+  .breast-btn.selected .bside-label{color:var(--mauve);}
+  /* Side timers */
+  .side-timer{background:var(--cream);border-radius:14px;padding:12px 8px;text-align:center;border:1.5px solid var(--blush);}
+  .side-timer-label{font-size:0.72rem;color:var(--light-text);font-family:'Noto Serif TC',serif;margin-bottom:4px;}
+  .side-timer-display{font-size:1.5rem;font-family:'Lato',sans-serif;font-weight:300;color:var(--deep);margin-bottom:8px;letter-spacing:0.05em;}
+  .side-timer-display.running{color:var(--mauve);animation:pulse 1.5s ease-in-out infinite;}
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .row-label{font-size:0.82rem;color:var(--light-text);width:62px;flex-shrink:0;}
+  .inp{flex:1;padding:10px 14px;border:2px solid var(--blush);border-radius:12px;background:var(--cream);font-size:0.95rem;color:var(--deep);font-family:'Lato',sans-serif;outline:none;transition:border-color 0.3s;text-align:center;}
+  .inp:focus{border-color:var(--rose);}
+  .inp-unit{font-size:0.82rem;color:var(--light-text);flex-shrink:0;}
+  /* Dropdown */
+  .sel-wrap{position:relative;flex:1;}
+  .sel-wrap::after{content:'▾';position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--mauve);pointer-events:none;font-size:0.85rem;}
+  select.sel{width:100%;padding:10px 34px 10px 14px;border:2px solid var(--blush);border-radius:12px;background:var(--cream);font-size:0.9rem;color:var(--deep);font-family:'Noto Serif TC',serif;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;transition:border-color 0.3s;}
+  select.sel:focus{border-color:var(--rose);}
+  select.sel.blue{border-color:var(--blue);background:#f0f8fd;color:var(--blue-dark);}
+  select.sel.blue:focus{border-color:var(--blue-dark);}
+  .timer-section{text-align:center;margin-bottom:14px;}
+  .timer-display{font-size:2.3rem;font-family:'Lato',sans-serif;font-weight:300;color:var(--deep);letter-spacing:0.08em;margin-bottom:10px;}
+  .timer-display.running{color:var(--mauve);animation:pulse 1.5s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+  .timer-controls{display:flex;gap:10px;justify-content:center;}
+  .btn{padding:10px 20px;border:none;border-radius:50px;cursor:pointer;font-family:'Noto Serif TC',serif;font-size:0.84rem;transition:all 0.3s;}
+  .btn-primary{background:var(--rose);color:white;box-shadow:0 4px 12px rgba(232,180,160,0.4);}
+  .btn-primary:hover{background:var(--mauve);transform:translateY(-1px);}
+  .btn-secondary{background:var(--blush);color:var(--mauve);}
+  .btn-secondary:hover{background:#eecfc4;}
+  .btn-success{background:var(--sage);color:white;box-shadow:0 4px 12px rgba(181,196,177,0.4);}
+  .btn-success:hover{background:var(--sage-dark);}
+  .btn-blue{background:var(--blue);color:white;box-shadow:0 4px 12px rgba(168,196,212,0.4);}
+  .btn-blue:hover{background:var(--blue-dark);transform:translateY(-1px);}
+  .btn-end{background:linear-gradient(135deg,#e8a090,#c97060);color:white;box-shadow:0 4px 14px rgba(201,112,96,0.35);font-weight:500;}
+  .btn-end:hover{background:linear-gradient(135deg,#d4806e,#b05848);transform:translateY(-1px);}
+  .notes-inp{width:100%;padding:10px 14px;border:2px solid var(--blush);border-radius:12px;background:var(--cream);font-size:0.83rem;color:var(--text);font-family:'Noto Serif TC',serif;outline:none;resize:none;transition:border-color 0.3s;margin-bottom:12px;}
+  .notes-inp:focus{border-color:var(--rose);}
+  .save-row{display:flex;gap:10px;}
+  .save-row .btn{flex:1;padding:12px;font-size:0.88rem;}
+  .divider{height:1px;background:var(--blush);margin:14px 0;}
+  /* Countdown */
+  .countdown-box{background:linear-gradient(135deg,#fff8f5,var(--blue-light));border-radius:16px;padding:14px;margin-bottom:0;text-align:center;border:1px solid rgba(168,196,212,0.3);}
+  .cd-label{font-size:0.73rem;color:var(--light-text);margin-bottom:4px;}
+  .cd-time{font-size:1.7rem;font-family:'Lato',sans-serif;font-weight:300;color:var(--deep);}
+  .cd-time.overdue{color:#c0504d;animation:pulse 1.5s ease-in-out infinite;}
+  .cd-next{font-size:0.73rem;color:var(--light-text);margin-top:4px;}
+  /* Bottle visual */
+  .bottle-wrap{display:flex;flex-direction:column;align-items:center;margin:10px 0 14px;}
+  .bottle-pct{font-size:1.2rem;font-family:'Lato',sans-serif;color:var(--blue-dark);font-weight:300;margin-top:6px;}
+  .bottle-sub{font-size:0.7rem;color:var(--light-text);}
+  .rem-bar{height:8px;background:var(--blue-light);border-radius:4px;margin-bottom:10px;overflow:hidden;}
+  .rem-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue-dark));border-radius:4px;transition:width 0.5s;}
+  .cc-row{display:flex;justify-content:space-between;font-size:0.72rem;color:var(--light-text);margin-bottom:12px;}
+  /* Records */
+  .sec-title{font-family:'Noto Serif TC',serif;font-size:0.78rem;letter-spacing:0.12em;color:var(--light-text);padding:0 20px 10px;}
+  .rec-item{background:var(--white);margin:0 16px 10px;border-radius:18px;padding:13px 15px;box-shadow:0 2px 10px var(--shadow);display:flex;align-items:center;gap:11px;animation:fadeUp 0.4s ease both;transition:transform 0.2s;}
+  .rec-item:hover{transform:translateX(4px);}
+  .rec-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0;}
+  .i-left{background:#fce8e0}.i-right{background:#e0f0e8}.i-both{background:#f0e8f5}.i-bottle{background:#dceef7}
+  .rec-info{flex:1;}
+  .rec-main{font-size:0.9rem;color:var(--deep);font-family:'Noto Serif TC',serif;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+  .badge{font-size:0.67rem;padding:2px 7px;border-radius:20px;background:var(--blush);color:var(--mauve);}
+  .badge-blue{background:var(--blue-light);color:var(--blue-dark);}
+  .rec-sub{font-size:0.73rem;color:var(--light-text);margin-top:2px;}
+  .rec-time{font-size:0.76rem;color:var(--light-text);font-family:'Lato',sans-serif;text-align:right;}
+  .rec-del{background:none;border:none;color:#d4b0a8;font-size:0.95rem;cursor:pointer;padding:4px;transition:color 0.2s;}
+  .rec-del:hover{color:#c47060;}
+  /* Stats */
+  .stat-card{background:var(--white);border-radius:20px;padding:18px;margin:0 16px 12px;box-shadow:0 2px 12px var(--shadow);}
+  .s-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--blush);}
+  .s-row:last-child{border-bottom:none;}
+  .s-label{font-size:0.83rem;color:var(--light-text);}
+  .s-val{font-size:0.93rem;color:var(--deep);font-family:'Lato',sans-serif;}
+  .chart-wrap{padding:8px 0;}
+  .b-row{display:flex;align-items:center;gap:9px;margin-bottom:7px;}
+  .b-day{font-size:0.7rem;color:var(--light-text);width:26px;text-align:right;}
+  .b-track{flex:1;height:14px;background:var(--blush);border-radius:7px;overflow:hidden;}
+  .b-fill{height:100%;background:linear-gradient(90deg,var(--rose),var(--mauve));border-radius:7px;transition:width 0.6s;}
+  .b-num{font-size:0.7rem;color:var(--light-text);width:18px;}
+  .empty{text-align:center;padding:36px 20px;color:var(--light-text);}
+  .empty .eicon{font-size:2.4rem;margin-bottom:8px;opacity:0.5;}
+  .empty p{font-family:'Noto Serif TC',serif;font-size:0.83rem;}
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--deep);color:white;padding:11px 22px;border-radius:50px;font-family:'Noto Serif TC',serif;font-size:0.83rem;box-shadow:0 8px 24px rgba(0,0,0,0.2);transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);z-index:100;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  /* iOS 安全區域 */
+  body{padding-top:env(safe-area-inset-top);}
+  .app{padding-bottom:calc(100px + env(safe-area-inset-bottom));}
+  /* PWA Banner */
+  #alarm-btn{background:none;border:2px solid var(--blush);border-radius:50%;width:42px;height:42px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s;flex-shrink:0;}
+  #alarm-btn:hover{background:var(--blush);transform:scale(1.1);}
+  #alarm-btn.alarm-on{border-color:var(--rose);background:#fff4f0;}
+  @keyframes ring{0%{transform:rotate(-15deg)}100%{transform:rotate(15deg)}}
+  #alarm-overlay{display:none;}
+  #alarm-overlay.show{display:flex !important;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <span class="header-icon">🌙</span>
+    <h1>餵奶日記</h1>
+    <p>每一次哺育，都是愛的流動</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('record')">🤱 親餵</button>
+    <button class="tab" onclick="switchTab('bottle')">🍼 奶瓶</button>
+    <button class="tab" onclick="switchTab('history')">📋 歷史</button>
+    <button class="tab" onclick="switchTab('stats')">📊 統計</button>
+    <button class="tab" onclick="switchTab('settings')">⚙️ 設定</button>
+  </div>
+
+  <!-- ══ 親餵 ══ -->
+  <div class="panel active" id="panel-record">
+    <div class="summary-strip">
+      <div class="summary-chip"><div class="num" id="today-count">0</div><div class="lbl">今日次數</div></div>
+      <div class="summary-chip"><div class="num" id="today-mins">0</div><div class="lbl">總分鐘</div></div>
+      <div class="summary-chip"><div class="num" id="last-feed">-</div><div class="lbl">上次距今</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🌸 選擇哺乳側（可複選）</div>
+      <div class="breast-selector">
+        <button class="breast-btn" id="btn-left" onclick="toggleSide('left')">
+          <!-- 左胸 SVG -->
+          <svg width="64" height="52" viewBox="0 0 64 52" fill="none">
+            <path d="M8 44 C8 44 4 36 4 28 C4 16 12 8 22 8 C28 8 32 12 32 12 C32 12 20 14 16 26 C13 34 14 44 14 44 Z" fill="currentColor" opacity="0.15"/>
+            <path d="M8 44 C8 44 4 36 4 28 C4 16 12 8 22 8 C28 8 32 12 32 12 C32 12 20 14 16 26 C13 34 14 44 14 44 Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M14 44 C14 44 13 34 16 26 C20 14 32 12 32 12 C36 18 36 28 34 36 C32 42 28 44 28 44 Z" fill="currentColor" opacity="0.25"/>
+            <ellipse cx="20" cy="28" rx="3" ry="3" fill="currentColor" opacity="0.5"/>
+            <line x1="32" y1="12" x2="32" y2="44" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.3"/>
+          </svg>
+          <span class="bside-label">左側</span>
+        </button>
+        <button class="breast-btn" id="btn-right" onclick="toggleSide('right')">
+          <!-- 右胸 SVG (mirror) -->
+          <svg width="64" height="52" viewBox="0 0 64 52" fill="none">
+            <path d="M56 44 C56 44 60 36 60 28 C60 16 52 8 42 8 C36 8 32 12 32 12 C32 12 44 14 48 26 C51 34 50 44 50 44 Z" fill="currentColor" opacity="0.15"/>
+            <path d="M56 44 C56 44 60 36 60 28 C60 16 52 8 42 8 C36 8 32 12 32 12 C32 12 44 14 48 26 C51 34 50 44 50 44 Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M50 44 C50 44 51 34 48 26 C44 14 32 12 32 12 C28 18 28 28 30 36 C32 42 36 44 36 44 Z" fill="currentColor" opacity="0.25"/>
+            <ellipse cx="44" cy="28" rx="3" ry="3" fill="currentColor" opacity="0.5"/>
+            <line x1="32" y1="12" x2="32" y2="44" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.3"/>
+          </svg>
+          <span class="bside-label">右側</span>
+        </button>
+      </div>
+      <!-- 左右各自計時 -->
+      <div id="dual-timer-row" style="display:none;gap:8px;margin-bottom:12px;" class="breast-selector">
+        <div class="side-timer" id="timer-left-box">
+          <div class="side-timer-label">左側</div>
+          <div class="side-timer-display" id="timer-left-display">00:00</div>
+          <div style="display:flex;gap:6px;justify-content:center;">
+            <button class="btn btn-primary" id="timer-left-btn" onclick="toggleSideTimer('left')" style="padding:6px 14px;font-size:0.75rem;">開始</button>
+            <button class="btn btn-secondary" onclick="resetSideTimer('left')" style="padding:6px 10px;font-size:0.75rem;">↺</button>
+          </div>
+        </div>
+        <div class="side-timer" id="timer-right-box">
+          <div class="side-timer-label">右側</div>
+          <div class="side-timer-display" id="timer-right-display">00:00</div>
+          <div style="display:flex;gap:6px;justify-content:center;">
+            <button class="btn btn-primary" id="timer-right-btn" onclick="toggleSideTimer('right')" style="padding:6px 14px;font-size:0.75rem;">開始</button>
+            <button class="btn btn-secondary" onclick="resetSideTimer('right')" style="padding:6px 10px;font-size:0.75rem;">↺</button>
+          </div>
+        </div>
+      </div>
+      <!-- 雙側結束鍵 -->
+      <button class="btn btn-end" id="dual-end-btn" style="display:none;width:100%;margin-bottom:14px;padding:11px;" onclick="endDualTimer()">
+        ✅ 結束哺乳・自動計算時間
+      </button>
+
+      <div class="card-title" style="margin-bottom:10px;">⏱ 計時器</div>
+      <div class="timer-section" id="timer-section-main">
+        <div class="timer-display" id="timer-display">00:00</div>
+        <div class="timer-controls">
+          <button class="btn btn-primary" id="timer-btn" onclick="toggleTimer()">開始</button>
+          <button class="btn btn-end" onclick="endMainTimer()" id="end-main-btn" style="display:none;">結束</button>
+          <button class="btn btn-secondary" onclick="resetTimer()">重設</button>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="card-title" style="margin-bottom:10px;">✏️ 手動輸入分鐘數</div>
+      <div class="row">
+        <span class="row-label">時長</span>
+        <input type="number" class="inp" id="manual-mins" placeholder="分鐘" min="1" max="60">
+        <span class="inp-unit">分鐘</span>
+      </div>
+      <textarea class="notes-inp" id="notes-input" rows="2" placeholder="備註（脹奶、寶寶狀況…）"></textarea>
+      <div class="save-row"><button class="btn btn-success" onclick="saveRecord()">💾 儲存紀錄</button></div>
+    </div>
+  </div>
+
+  <!-- ══ 奶瓶 ══ -->
+  <div class="panel" id="panel-bottle">
+
+    <!-- 倒數 -->
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between;">
+        <span>⏰ 下次餵奶倒數</span>
+        <button id="alarm-btn" onclick="toggleAlarm()" title="開啟/關閉提醒">
+          <svg id="alarm-icon" width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <circle cx="14" cy="15" r="9" stroke="#c98b7a" stroke-width="2" fill="#fdf6ee"/>
+            <line x1="14" y1="9" x2="14" y2="15" stroke="#c98b7a" stroke-width="2" stroke-linecap="round"/>
+            <line x1="14" y1="15" x2="18" y2="17" stroke="#c98b7a" stroke-width="2" stroke-linecap="round"/>
+            <path d="M6 8 Q8 5 10 7" stroke="#c98b7a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <path d="M22 8 Q20 5 18 7" stroke="#c98b7a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <line id="alarm-slash" x1="5" y1="5" x2="23" y2="23" stroke="#e05050" stroke-width="2.2" stroke-linecap="round" style="display:none"/>
+          </svg>
+        </button>
+      </div>
+      <div class="countdown-box">
+        <div class="cd-label">距離下次餵奶</div>
+        <div class="cd-time" id="countdown-display">-- : --</div>
+        <div class="cd-next" id="countdown-next">請先設定間隔時間</div>
+        <div id="alarm-status" style="margin-top:6px;font-size:0.7rem;color:var(--sage-dark);display:none;">🔔 提醒已開啟</div>
+      </div>
+    </div>
+
+    <!-- 提醒彈窗 -->
+    <div id="alarm-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;align-items:center;justify-content:center;">
+      <div style="background:var(--white);border-radius:28px;padding:32px 24px;margin:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:fadeUp 0.4s ease both;">
+        <div style="font-size:3rem;margin-bottom:12px;animation:ring 0.5s ease-in-out infinite alternate;">🍼</div>
+        <div style="font-family:'Noto Serif TC',serif;font-size:1.3rem;color:var(--deep);font-weight:500;margin-bottom:6px;">餵奶時間到了！</div>
+        <div style="font-size:0.85rem;color:var(--light-text);margin-bottom:24px;">寶寶肚子餓囉，準備餵奶吧 🌸</div>
+        <div style="display:flex;gap:10px;justify-content:center;">
+          <button onclick="dismissAlarm()" class="btn btn-success" style="padding:12px 28px;font-size:0.95rem;">✅ 知道了</button>
+          <button onclick="snoozeAlarm()" class="btn btn-secondary" style="padding:12px 20px;font-size:0.95rem;">💤 再 5 分鐘</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 手機鬧鐘提示彈窗 -->
+    <div id="clock-hint-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;align-items:center;justify-content:center;">
+      <div style="background:var(--white);border-radius:28px;padding:28px 22px;margin:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:fadeUp 0.3s ease both;max-width:320px;width:100%;">
+        <div style="font-size:2.4rem;margin-bottom:10px;">⏰</div>
+        <div style="font-size:1.05rem;font-weight:600;color:var(--deep);margin-bottom:14px;">設定手機鬧鐘</div>
+
+        <!-- 時間顯示 + 複製 -->
+        <div style="background:var(--blush);border-radius:16px;padding:14px;margin-bottom:14px;">
+          <div style="font-size:0.75rem;color:var(--light-text);margin-bottom:4px;">下次餵奶時間</div>
+          <div style="font-size:2.2rem;font-weight:300;color:var(--mauve);letter-spacing:2px;" id="clock-hint-time">--:--</div>
+          <button onclick="copyAlarmTime()" id="copy-btn" style="margin-top:8px;background:var(--mauve);color:white;border:none;border-radius:30px;padding:7px 20px;font-size:0.8rem;cursor:pointer;">
+            📋 複製時間
+          </button>
+        </div>
+
+        <!-- 步驟說明 -->
+        <div style="text-align:left;background:#f9f6f3;border-radius:14px;padding:12px 14px;margin-bottom:16px;font-size:0.78rem;color:var(--light-text);line-height:1.9;">
+          <div style="font-weight:600;color:var(--deep);margin-bottom:4px;">設定步驟：</div>
+          <div>① 點「📋 複製時間」</div>
+          <div>② 按手機下方 Home 鍵或上滑回主畫面</div>
+          <div>③ 找到並開啟<b style="color:var(--deep);">「時鐘」App</b></div>
+          <div>④ 選「鬧鐘」→ 右上角 <b style="color:var(--deep);">＋</b></div>
+          <div>⑤ 輸入複製的時間，儲存</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button onclick="copyAndHint()" style="background:var(--rose);color:white;border:none;border-radius:50px;padding:13px;font-size:0.9rem;cursor:pointer;font-weight:500;" id="copy-go-btn">
+            📋 複製時間，去設定鬧鐘
+          </button>
+          <button onclick="document.getElementById('clock-hint-overlay').style.display='none'" style="background:transparent;color:var(--light-text);border:none;padding:8px;font-size:0.82rem;cursor:pointer;">
+            稍後自行設定
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 泡奶設定 -->
+    <div class="card">
+      <div class="card-title">🥛 泡奶設定</div>
+
+      <div class="row">
+        <span class="row-label">泡奶量</span>
+        <input type="number" class="inp" id="prep-cc" placeholder="例：180" min="30" max="400" step="10" oninput="updateBottleVisual()">
+        <span class="inp-unit">CC</span>
+      </div>
+
+      <div class="row">
+        <span class="row-label">每次喝</span>
+        <div class="sel-wrap">
+          <select class="sel blue" id="drink-cc" onchange="updateBottleVisual()">
+            <option value="">── 選擇 CC ──</option>
+            <option>30</option><option>40</option><option>50</option><option>60</option>
+            <option>70</option><option>80</option><option>90</option><option>100</option>
+            <option>110</option><option>120</option><option>130</option><option>140</option>
+            <option>150</option><option>160</option><option>170</option><option>180</option>
+            <option>200</option><option>220</option><option>240</option>
+          </select>
+        </div>
+        <span class="inp-unit">CC</span>
+      </div>
+
+      <div class="row" style="margin-bottom:0">
+        <span class="row-label">間隔</span>
+        <div class="sel-wrap">
+          <select class="sel blue" id="interval-hours" onchange="onIntervalChange()">
+            <option value="">── 選擇 ──</option>
+            <option value="1">每 1 小時</option>
+            <option value="1.5">每 1.5 小時</option>
+            <option value="2">每 2 小時</option>
+            <option value="2.5">每 2.5 小時</option>
+            <option value="3">每 3 小時</option>
+            <option value="3.5">每 3.5 小時</option>
+            <option value="4">每 4 小時</option>
+            <option value="4.5">每 4.5 小時</option>
+            <option value="5">每 5 小時</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 奶瓶視覺化 -->
+    <div class="card" id="bottle-visual-card" style="display:none;">
+      <div class="card-title">📊 今日這瓶狀況</div>
+      <div class="bottle-wrap">
+        <svg width="72" height="120" viewBox="0 0 72 120">
+          <defs>
+            <clipPath id="bc">
+              <path d="M26 14 Q22 26 18 36 L18 102 Q18 114 36 114 Q54 114 54 102 L54 36 Q50 26 46 14 Z"/>
+            </clipPath>
+            <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#5a8fa8"/>
+              <stop offset="100%" stop-color="#a8c4d4"/>
+            </linearGradient>
+          </defs>
+          <rect x="24" y="3" width="24" height="11" rx="4" fill="#a8c4d4" opacity="0.7"/>
+          <path d="M26 14 Q22 26 18 36 L18 102 Q18 114 36 114 Q54 114 54 102 L54 36 Q50 26 46 14 Z" fill="#dceef7" stroke="#a8c4d4" stroke-width="1.5"/>
+          <rect id="bottle-liquid" x="18" y="114" width="36" height="0" fill="url(#lg)" clip-path="url(#bc)"/>
+          <line x1="48" y1="50" x2="54" y2="50" stroke="#a8c4d4" stroke-width="1"/>
+          <line x1="48" y1="66" x2="54" y2="66" stroke="#a8c4d4" stroke-width="1"/>
+          <line x1="48" y1="82" x2="54" y2="82" stroke="#a8c4d4" stroke-width="1"/>
+          <line x1="48" y1="98" x2="54" y2="98" stroke="#a8c4d4" stroke-width="1"/>
+        </svg>
+        <div class="bottle-pct" id="bottle-pct-text">0%</div>
+        <div class="bottle-sub" id="bottle-sub-text">請填寫泡奶量</div>
+      </div>
+      <div class="rem-bar"><div class="rem-fill" id="rem-fill" style="width:100%"></div></div>
+      <div class="cc-row">
+        <span>已喝：<strong id="drunk-cc">0</strong> CC</span>
+        <span>剩餘：<strong id="left-cc">0</strong> CC</span>
+        <span>還可喝：<strong id="more-times">0</strong> 次</span>
+      </div>
+    </div>
+
+    <!-- 紀錄這次 -->
+    <div class="card">
+      <div class="card-title">✍️ 紀錄這次喝奶</div>
+
+      <div class="row">
+        <span class="row-label">實際喝了</span>
+        <div class="sel-wrap">
+          <select class="sel blue" id="actual-cc">
+            <option value="">── 選擇 CC 數 ──</option>
+            <option>10</option><option>20</option><option>30</option><option>40</option>
+            <option>50</option><option>60</option><option>70</option><option>80</option>
+            <option>90</option><option>100</option><option>110</option><option>120</option>
+            <option>130</option><option>140</option><option>150</option><option>160</option>
+            <option>170</option><option>180</option><option>200</option><option>220</option>
+            <option>240</option>
+          </select>
+        </div>
+        <span class="inp-unit">CC</span>
+      </div>
+
+      <div class="row" style="margin-bottom:12px;">
+        <span class="row-label">間隔設定</span>
+        <div class="sel-wrap">
+          <select class="sel blue" id="record-interval">
+            <option value="">── 選擇 ──</option>
+            <option value="1">1 小時後</option>
+            <option value="1.5">1.5 小時後</option>
+            <option value="2">2 小時後</option>
+            <option value="2.5">2.5 小時後</option>
+            <option value="3">3 小時後</option>
+            <option value="3.5">3.5 小時後</option>
+            <option value="4">4 小時後</option>
+            <option value="4.5">4.5 小時後</option>
+            <option value="5">5 小時後</option>
+          </select>
+        </div>
+      </div>
+
+      <textarea class="notes-inp" id="bottle-notes" rows="2" placeholder="備註（吐奶、打嗝狀況…）"></textarea>
+      <div class="save-row">
+        <button class="btn btn-blue" onclick="saveBottleRecord()" style="padding:12px;font-size:0.88rem;">🍼 儲存奶瓶紀錄</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 歷史 ══ -->
+  <div class="panel" id="panel-history">
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-title" style="margin-bottom:10px;">🗓 篩選日期</div>
+      <input type="date" class="inp" id="filter-date" style="width:100%;text-align:left;" onchange="renderHistory()">
+    </div>
+    <div class="sec-title" id="history-section-title">所有紀錄</div>
+    <div id="history-list"></div>
+  </div>
+
+  <!-- ══ 統計 ══ -->
+  <div class="panel" id="panel-stats">
+    <div class="stat-card">
+      <div class="card-title" style="margin-bottom:10px;">📈 近 7 天次數（全部）</div>
+      <div class="chart-wrap" id="week-chart"></div>
+    </div>
+    <div class="stat-card">
+      <div class="card-title" style="margin-bottom:10px;">🍼 奶瓶統計</div>
+      <div class="s-row"><span class="s-label">今日奶瓶次數</span><span class="s-val" id="b-today">0 次</span></div>
+      <div class="s-row"><span class="s-label">今日總攝取</span><span class="s-val" id="b-cc-today">0 CC</span></div>
+      <div class="s-row"><span class="s-label">平均每次攝取</span><span class="s-val" id="b-avg">0 CC</span></div>
+      <div class="s-row"><span class="s-label">累計奶瓶次數</span><span class="s-val" id="b-total">0 次</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="card-title" style="margin-bottom:10px;">🤱 親餵統計</div>
+      <div class="s-row"><span class="s-label">總哺乳次數</span><span class="s-val" id="total-count">0 次</span></div>
+      <div class="s-row"><span class="s-label">總哺乳時間</span><span class="s-val" id="total-time">0 分鐘</span></div>
+      <div class="s-row"><span class="s-label">平均每次</span><span class="s-val" id="avg-time">0 分鐘</span></div>
+      <div class="s-row"><span class="s-label">左側 / 右側</span><span class="s-val" id="lr-ratio">0 / 0</span></div>
+    </div>
+  </div>
+
+  <!-- ══ 設定 ══ -->
+  <div class="panel" id="panel-settings">
+
+    <!-- 計時器設定 -->
+    <div class="card">
+      <div class="card-title">⏱ 計時器設定</div>
+      <div class="s-row" style="margin-bottom:10px;">
+        <span class="s-label">超過幾小時自動 reset</span>
+        <select class="inp" id="timer-max-hours" style="width:90px;padding:6px 10px;" onchange="saveSettings()">
+          <option value="2">2 小時</option>
+          <option value="3">3 小時</option>
+          <option value="4" selected>4 小時</option>
+          <option value="6">6 小時</option>
+          <option value="0">不限制</option>
+        </select>
+      </div>
+      <div style="font-size:0.75rem;color:var(--light-text);">儲存紀錄後計時器也會自動 reset</div>
+    </div>
+
+    <!-- LINE Messaging API -->
+    <div class="card">
+      <div class="card-title">💬 LINE 通知設定</div>
+      <div style="font-size:0.78rem;color:var(--light-text);margin-bottom:12px;line-height:1.6;">
+        使用 LINE Messaging API 發送餵奶提醒通知。
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">Channel Access Token</label>
+        <input type="password" class="inp" id="line-token" placeholder="貼上新的 Channel Access Token" style="width:100%;">
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">接收通知的 LINE User ID</label>
+        <input type="text" class="inp" id="line-user-id" placeholder="U1e68f3c5a36277ff789c0f4458612d98" style="width:100%;">
+        <div style="font-size:0.7rem;color:var(--light-text);margin-top:3px;">LINE Developers Console → Basic settings → Your user ID</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button onclick="testLineNotify()" class="btn btn-secondary" style="flex:1;font-size:0.82rem;">📨 測試發送</button>
+        <button onclick="saveSettings()" class="btn btn-success" style="flex:1;font-size:0.82rem;">💾 儲存</button>
+      </div>
+      <div id="line-status" style="font-size:0.75rem;text-align:center;color:var(--light-text);min-height:18px;"></div>
+    </div>
+
+    <!-- Email 通知 -->
+    <div class="card">
+      <div class="card-title">📧 Email 通知</div>
+      <div style="font-size:0.78rem;color:var(--light-text);margin-bottom:12px;line-height:1.6;">
+        透過 EmailJS 免費服務發送。需先到 <b>emailjs.com</b> 註冊並建立模板。
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">收件 Email</label>
+        <input type="email" class="inp" id="notify-email" placeholder="your@email.com" style="width:100%;">
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">EmailJS Service ID</label>
+        <input type="text" class="inp" id="emailjs-service" placeholder="service_xxxxxxx" style="width:100%;">
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">EmailJS Template ID</label>
+        <input type="text" class="inp" id="emailjs-template" placeholder="template_xxxxxxx" style="width:100%;">
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">EmailJS Public Key</label>
+        <input type="text" class="inp" id="emailjs-pubkey" placeholder="Public Key" style="width:100%;">
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button onclick="testEmail()" class="btn btn-secondary" style="flex:1;font-size:0.82rem;">📨 測試發送</button>
+        <button onclick="saveSettings()" class="btn btn-success" style="flex:1;font-size:0.82rem;">💾 儲存</button>
+      </div>
+      <div id="email-status" style="font-size:0.75rem;text-align:center;color:var(--light-text);min-height:18px;"></div>
+    </div>
+
+    <!-- 通知時機 -->
+    <div class="card">
+      <div class="card-title">🔔 通知時機</div>
+      <label style="display:flex;align-items:center;gap:10px;padding:8px 0;font-size:0.85rem;cursor:pointer;">
+        <input type="checkbox" id="notif-30min" onchange="saveSettings()" style="width:18px;height:18px;accent-color:var(--mauve);">
+        提前 30 分鐘通知
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:8px 0;font-size:0.85rem;cursor:pointer;">
+        <input type="checkbox" id="notif-ontime" checked onchange="saveSettings()" style="width:18px;height:18px;accent-color:var(--mauve);">
+        時間到當下通知
+      </label>
+    </div>
+
+  </div>
+
+  <div style="height:20px;"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Data ──────────────────────────────────────────────
+let records = JSON.parse(localStorage.getItem('nursing_records') || '[]');
+let bottleRecords = JSON.parse(localStorage.getItem('bottle_records') || '[]');
+let selectedBreast = null;
+let timerInterval=null, timerRunning=false, timerSeconds=0, timerStartTime=null;
+let countdownInterval=null;
+
+// ── 第一次用戶互動時預熱 AudioContext ─────────────────
+document.addEventListener('click', function initAudio(){
+  getAudioCtx();
+  if(alarmOn) startKeepAlive();
+}, { once: true });
+
+// ── Tabs ──────────────────────────────────────────────
+function switchTab(t) {
+  const names=['record','bottle','history','stats','settings'];
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',names[i]===t));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+  if(t==='history') renderHistory();
+  if(t==='stats') renderStats();
+  if(t==='bottle'){
+    if(bottleRecords.length>0&&bottleRecords[0].interval){
+      const li=bottleRecords[0].interval;
+      const s1=document.getElementById('interval-hours');
+      const s2=document.getElementById('record-interval');
+      for(let o of s1.options){if(parseFloat(o.value)===li){s1.value=o.value;break;}}
+      for(let o of s2.options){if(parseFloat(o.value)===li){s2.value=o.value;break;}}
+    }
+    updateCountdown();
+    updateBottleVisual();
+  }
+}
+
+// ── Breast Selection (多選) ───────────────────────────
+let selectedSides = new Set(); // 'left', 'right'
+let sideTimers = {
+  left:  {running:false, seconds:0, startTime:null, raf:null},
+  right: {running:false, seconds:0, startTime:null, raf:null}
+};
+
+function toggleSide(side) {
+  if(selectedSides.has(side)) selectedSides.delete(side);
+  else selectedSides.add(side);
+  // 更新 selectedBreast 供儲存用
+  if(selectedSides.has('left')&&selectedSides.has('right')) selectedBreast='both';
+  else if(selectedSides.has('left')) selectedBreast='left';
+  else if(selectedSides.has('right')) selectedBreast='right';
+  else selectedBreast=null;
+  // 更新按鈕樣式
+  document.getElementById('btn-left').classList.toggle('selected', selectedSides.has('left'));
+  document.getElementById('btn-right').classList.toggle('selected', selectedSides.has('right'));
+  // 雙側時顯示獨立計時器；單側用主計時器
+  const dualRow = document.getElementById('dual-timer-row');
+  const mainTimer = document.getElementById('timer-section-main');
+  if(selectedSides.has('left')&&selectedSides.has('right')){
+    dualRow.style.display='grid';
+    if(mainTimer) mainTimer.style.display='none';
+  } else {
+    dualRow.style.display='none';
+    if(mainTimer) mainTimer.style.display='block';
+  }
+}
+
+function toggleSideTimer(side){
+  const t=sideTimers[side];
+  const btn=document.getElementById('timer-'+side+'-btn');
+  const disp=document.getElementById('timer-'+side+'-display');
+  if(!t.running){
+    t.running=true;
+    t.startTime=Date.now()-t.seconds*1000;
+    btn.textContent='暫停';
+    disp.classList.add('running');
+    document.getElementById('dual-end-btn').style.display='block';
+    function raf(){
+      if(!t.running) return;
+      t.seconds=Math.floor((Date.now()-t.startTime)/1000);
+      disp.textContent=String(Math.floor(t.seconds/60)).padStart(2,'0')+':'+String(t.seconds%60).padStart(2,'0');
+      t.raf=requestAnimationFrame(raf);
+    }
+    t.raf=requestAnimationFrame(raf);
+  } else {
+    t.running=false;
+    cancelAnimationFrame(t.raf);
+    btn.textContent='繼續';
+    disp.classList.remove('running');
+  }
+}
+
+function resetSideTimer(side){
+  const t=sideTimers[side];
+  t.running=false;
+  cancelAnimationFrame(t.raf);
+  t.seconds=0; t.startTime=null;
+  document.getElementById('timer-'+side+'-display').textContent='00:00';
+  document.getElementById('timer-'+side+'-display').classList.remove('running');
+  document.getElementById('timer-'+side+'-btn').textContent='開始';
+}
+
+// 舊的 selectBreast 保留相容性
+function selectBreast(side){ toggleSide(side); }
+
+// ── Timer ─────────────────────────────────────────────
+function toggleTimer(){
+  if(!timerRunning){
+    clearInterval(timerInterval);
+    timerRunning=true;
+    timerStartTime=Date.now()-timerSeconds*1000;
+    document.getElementById('timer-btn').textContent='暫停';
+    document.getElementById('timer-display').classList.add('running');
+    document.getElementById('end-main-btn').style.display='inline-flex';
+    rafTimer();
+  } else {
+    timerRunning=false;
+    timerInterval=null;
+    document.getElementById('timer-btn').textContent='繼續';
+    document.getElementById('timer-display').classList.remove('running');
+  }
+}
+function rafTimer(){
+  if(!timerRunning) return;
+  timerSeconds=Math.floor((Date.now()-timerStartTime)/1000);
+  document.getElementById('timer-display').textContent=
+    String(Math.floor(timerSeconds/60)).padStart(2,'0')+':'+String(timerSeconds%60).padStart(2,'0');
+  // 超過設定時數自動 reset
+  const maxH = parseInt(localStorage.getItem('setting_timer_max_hours')||'4');
+  if(maxH > 0 && timerSeconds >= maxH * 3600){
+    resetTimer();
+    showToast('⏱ 計時超過 '+maxH+' 小時，已自動 reset');
+    return;
+  }
+  requestAnimationFrame(rafTimer);
+}
+function updateTimer(){ rafTimer(); }
+
+// 單側結束：停止計時，自動填入分鐘數
+function endMainTimer(){
+  if(timerRunning){
+    timerRunning=false;
+    timerInterval=null;
+    document.getElementById('timer-display').classList.remove('running');
+  }
+  const mins=Math.max(1, Math.round(timerSeconds/60));
+  document.getElementById('manual-mins').value=mins;
+  document.getElementById('timer-btn').textContent='開始';
+  document.getElementById('end-main-btn').style.display='none';
+  // 視覺回饋
+  const inp=document.getElementById('manual-mins');
+  inp.style.borderColor='var(--rose)';
+  inp.style.background='#fff4f0';
+  setTimeout(()=>{inp.style.borderColor='';inp.style.background='';},1500);
+  showToast('⏱ 已填入 '+mins+' 分鐘');
+}
+
+// 雙側結束：停止兩側計時，合計填入
+function endDualTimer(){
+  // 停止兩側
+  ['left','right'].forEach(side=>{
+    const t=sideTimers[side];
+    if(t.running){
+      t.running=false;
+      cancelAnimationFrame(t.raf);
+      document.getElementById('timer-'+side+'-btn').textContent='繼續';
+      document.getElementById('timer-'+side+'-display').classList.remove('running');
+    }
+  });
+  const totalSecs=sideTimers.left.seconds+sideTimers.right.seconds;
+  const mins=Math.max(1, Math.round(totalSecs/60));
+  document.getElementById('manual-mins').value=mins;
+  document.getElementById('dual-end-btn').style.display='none';
+  // 顯示明細
+  const lm=Math.floor(sideTimers.left.seconds/60), ls=sideTimers.left.seconds%60;
+  const rm=Math.floor(sideTimers.right.seconds/60), rs=sideTimers.right.seconds%60;
+  const inp=document.getElementById('manual-mins');
+  inp.style.borderColor='var(--rose)';
+  inp.style.background='#fff4f0';
+  setTimeout(()=>{inp.style.borderColor='';inp.style.background='';},1500);
+  showToast(`左 ${lm}:${String(ls).padStart(2,'0')} ＋ 右 ${rm}:${String(rs).padStart(2,'0')} ＝ ${mins} 分鐘`);
+}
+
+function resetTimer(){
+  timerRunning=false;
+  clearInterval(timerInterval);
+  timerInterval=null;
+  timerSeconds=0;
+  timerStartTime=null;
+  document.getElementById('timer-display').textContent='00:00';
+  document.getElementById('timer-display').classList.remove('running');
+  document.getElementById('timer-btn').textContent='開始';
+  document.getElementById('end-main-btn').style.display='none';
+}
+
+// ── Save Breast ───────────────────────────────────────
+function saveRecord(){
+  const manMins=parseInt(document.getElementById('manual-mins').value);
+  // 雙側時：取左右各自秒數相加平均，或取最大值
+  let dur=0;
+  if(selectedSides.has('left')&&selectedSides.has('right')){
+    const totalSecs=sideTimers.left.seconds+sideTimers.right.seconds;
+    dur=manMins||Math.round(totalSecs/60)||0;
+  } else {
+    dur=manMins||Math.round(timerSeconds/60)||0;
+  }
+  if(!selectedBreast){showToast('請選擇哺乳側 🌸');return;}
+  if(dur<1){showToast('請輸入時長或使用計時器 ⏱');return;}
+  const now=new Date();
+  // 記錄左右各自秒數
+  const leftSecs=sideTimers.left.seconds||0;
+  const rightSecs=sideTimers.right.seconds||0;
+  records.unshift({id:Date.now(),type:'breast',breast:selectedBreast,duration:dur,
+    leftSecs: selectedSides.has('left')?leftSecs:0,
+    rightSecs: selectedSides.has('right')?rightSecs:0,
+    notes:document.getElementById('notes-input').value.trim(),
+    date:now.toLocaleDateString('zh-TW'),
+    time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),ts:now.getTime()});
+  saveAll();updateSummary();showToast('親餵紀錄已儲存 ✨');
+  // 儲存後自動 reset 計時器
+  resetTimer();
+  resetSideTimer('left');
+  resetSideTimer('right');
+  selectedSides.clear();
+  selectedBreast=null;
+  document.getElementById('btn-left').classList.remove('selected');
+  document.getElementById('btn-right').classList.remove('selected');
+  document.getElementById('dual-timer-row').style.display='none';
+  document.getElementById('timer-section-main').style.display='block';
+  document.getElementById('manual-mins').value='';
+  document.getElementById('notes-input').value='';
+}
+
+// ── Bottle Visual ─────────────────────────────────────
+function updateBottleVisual(){
+  const prep=parseInt(document.getElementById('prep-cc').value)||0;
+  const drink=parseInt(document.getElementById('drink-cc').value)||0;
+  const card=document.getElementById('bottle-visual-card');
+  if(prep>0&&drink>0){
+    card.style.display='block';
+    const today=new Date().toLocaleDateString('zh-TW');
+    const drunk=bottleRecords.filter(r=>r.date===today).reduce((a,r)=>a+(r.cc||0),0);
+    const leftCC=Math.max(prep-drunk,0);
+    const moreTimes=Math.floor(leftCC/drink);
+    const pct=Math.min(100,Math.round((drunk/prep)*100));
+    // SVG: body from y=36 to y=114 = 78px
+    const liqH=Math.min(78,Math.round((drunk/prep)*78));
+    const liq=document.getElementById('bottle-liquid');
+    liq.setAttribute('y',114-liqH); liq.setAttribute('height',liqH);
+    document.getElementById('bottle-pct-text').textContent=pct+'%';
+    document.getElementById('bottle-sub-text').textContent='已喝 '+drunk+' / 泡奶 '+prep+' CC';
+    document.getElementById('drunk-cc').textContent=drunk;
+    document.getElementById('left-cc').textContent=leftCC;
+    document.getElementById('more-times').textContent=moreTimes;
+    document.getElementById('rem-fill').style.width=Math.max(0,100-pct)+'%';
+  } else {
+    card.style.display='none';
+  }
+}
+
+// ── Alarm ──────────────────────────────────────────────
+let alarmOn = false;
+let alarmFired = false;
+let alarmDismissedTs = null;
+let snoozeUntil = null;
+let snoozeTimeout = null;
+
+// AudioContext 共用實例 + 靜音保活
+let audioCtx = null;
+let alarmSoundInterval = null;
+let keepAliveSource = null;
+
+function getAudioCtx(){
+  if(!audioCtx || audioCtx.state === 'closed'){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// 播超低音量雜訊，讓 iOS AudioContext 保持 running 不被 suspend
+function startKeepAlive(){
+  if(keepAliveSource) return;
+  try {
+    const ctx = getAudioCtx();
+    function loop(){
+      const buf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1)*0.00005;
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.onended = loop;
+      src.start();
+      keepAliveSource = src;
+    }
+    loop();
+  } catch(e){}
+}
+
+function stopKeepAlive(){
+  if(keepAliveSource){ try{ keepAliveSource.onended=null; keepAliveSource.stop(); }catch(e){} keepAliveSource=null; }
+}
+
+function singleBeep(freq1, freq2, vol){
+  try {
+    const ctx = getAudioCtx();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(freq1, ctx.currentTime);
+    osc.frequency.setValueAtTime(freq2, ctx.currentTime + 0.14);
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.38);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.38);
+  } catch(e){}
+}
+
+function playAlarmSound(){
+  let n = 0;
+  function loop(){
+    if(!alarmFired){ clearInterval(alarmSoundInterval); return; }
+    singleBeep(880, 550, 0.6);
+    n++;
+    if(n >= 8) n = 0;
+  }
+  loop();
+  alarmSoundInterval = setInterval(loop, 500);
+}
+
+function stopAlarmSound(){
+  clearInterval(alarmSoundInterval);
+  alarmSoundInterval = null;
+}
+
+function toggleAlarm(){
+  alarmOn = !alarmOn;
+  localStorage.setItem('alarm_on', alarmOn ? '1' : '0'); // 記住開關狀態
+  const btn    = document.getElementById('alarm-btn');
+  const slash  = document.getElementById('alarm-slash');
+  const status = document.getElementById('alarm-status');
+  if(alarmOn){
+    getAudioCtx();
+    startKeepAlive();
+    btn.classList.add('alarm-on');
+    slash.style.display = 'none';
+    status.style.display = 'block';
+    if('Notification' in window && Notification.permission === 'default'){
+      Notification.requestPermission().then(p=>{
+        if(p==='granted'){
+          // 權限剛授權，補排當前倒數的通知
+          const last = bottleRecords[0];
+          const iv = parseFloat(document.getElementById('interval-hours').value);
+          if(last && iv) scheduleNotification(last.ts + iv * 3600000);
+        }
+      });
+    } else if(Notification.permission === 'granted'){
+      // 已有權限，直接補排
+      const last = bottleRecords[0];
+      const iv = parseFloat(document.getElementById('interval-hours').value);
+      if(last && iv) scheduleNotification(last.ts + iv * 3600000);
+    }
+    showToast('🔔 提醒已開啟');
+  } else {
+    btn.classList.remove('alarm-on');
+    slash.style.display = 'block';
+    status.style.display = 'none';
+    stopAlarmSound();
+    stopKeepAlive();
+    clearTimeout(snoozeTimeout);
+    clearTimeout(scheduledNotifTimeout);
+    alarmFired = false;
+    snoozeUntil = null;
+    showToast('🔕 提醒已關閉');
+  }
+}
+
+function fireAlarm(){
+  if(alarmFired) return;
+  alarmFired = true;
+  const overlay = document.getElementById('alarm-overlay');
+  overlay.style.display = 'flex';
+  overlay.classList.add('show');
+  document.getElementById('alarm-icon').style.animation = 'ring 0.4s ease-in-out infinite alternate';
+  playAlarmSound();
+  if('Notification' in window && Notification.permission === 'granted'){
+    new Notification('🍼 餵奶時間到了！', {
+      body: '寶寶肚子餓囉，準備餵奶吧 🌸',
+      icon: './icons/icon-192.png',
+      tag: 'nursing-alarm',
+      renotify: true
+    });
+  }
+}
+
+function dismissAlarm(){
+  alarmFired = false;
+  alarmDismissedTs = _currentAlarmTs;
+  snoozeUntil = null;
+  clearTimeout(snoozeTimeout);
+  stopAlarmSound();
+  document.getElementById('alarm-overlay').style.display = 'none';
+  document.getElementById('alarm-overlay').classList.remove('show');
+  document.getElementById('alarm-icon').style.animation = 'none';
+  showToast('✅ 提醒已關閉，記得餵奶！');
+}
+
+function snoozeAlarm(){
+  alarmFired = false;
+  stopAlarmSound();
+  document.getElementById('alarm-overlay').style.display = 'none';
+  document.getElementById('alarm-overlay').classList.remove('show');
+  document.getElementById('alarm-icon').style.animation = 'none';
+  snoozeUntil = Date.now() + 5 * 60 * 1000;
+  showToast('💤 5 分鐘後再提醒');
+  // 用 setTimeout 精確觸發，keepAlive 保持 AudioContext 活躍
+  clearTimeout(snoozeTimeout);
+  snoozeTimeout = setTimeout(()=>{
+    if(alarmOn && !alarmFired && alarmDismissedTs !== _currentAlarmTs){
+      snoozeUntil = null;
+      fireAlarm();
+    }
+  }, 5 * 60 * 1000);
+}
+
+// ── Countdown ─────────────────────────────────────────
+function onIntervalChange(){
+  const v=document.getElementById('interval-hours').value;
+  if(v){
+    const rs=document.getElementById('record-interval');
+    for(let o of rs.options){if(parseFloat(o.value)===parseFloat(v)){rs.value=o.value;break;}}
+  }
+  updateCountdown();
+}
+
+function updateCountdown(){
+  clearInterval(countdownInterval);
+  const v=parseFloat(document.getElementById('interval-hours').value);
+  if(!v){
+    document.getElementById('countdown-display').textContent='-- : --';
+    document.getElementById('countdown-next').textContent='請選擇間隔時間';
+    return;
+  }
+  tickCD(v);
+  countdownInterval=setInterval(()=>tickCD(v),1000);
+}
+
+let _currentAlarmTs = null; // 當前這次應該響的 nextTs
+
+function tickCD(hrs){
+  const last=bottleRecords[0];
+  const disp=document.getElementById('countdown-display');
+  const nxt=document.getElementById('countdown-next');
+  if(!last){
+    disp.textContent='尚無紀錄';
+    disp.classList.remove('overdue');
+    nxt.textContent='請先儲存第一次奶瓶紀錄';
+    return;
+  }
+  const nextTs=last.ts+hrs*3600000;
+  _currentAlarmTs = nextTs;
+  const diffMs=nextTs-Date.now();
+  const totalSecs=Math.round(diffMs/1000);
+
+  // ── 鬧鐘觸發邏輯 ──
+  // 只有在：時間到、提醒開啟、未在響、且這個 nextTs 尚未被 dismiss 過
+  if(totalSecs<=0 && alarmOn && !alarmFired && alarmDismissedTs !== nextTs){
+    if(snoozeUntil){
+      if(Date.now() >= snoozeUntil){ snoozeUntil=null; fireAlarm(); }
+    } else {
+      fireAlarm();
+    }
+  }
+
+  if(totalSecs<=0){
+    const overSecs=Math.abs(totalSecs);
+    const oh=Math.floor(overSecs/3600), om=Math.floor((overSecs%3600)/60), os=overSecs%60;
+    disp.textContent=(oh>0?oh+' 時 ':'')+(om>0?om+' 分 ':'')+os+' 秒 前';
+    disp.classList.add('overdue');
+    nxt.textContent= alarmDismissedTs===nextTs ? '✅ 已確認，等下次餵奶' : '⚠️ 可以餵奶囉！';
+  } else {
+    disp.classList.remove('overdue');
+    const h=Math.floor(totalSecs/3600);
+    const m=Math.floor((totalSecs%3600)/60);
+    const s=totalSecs%60;
+    disp.textContent=(h>0?h+' 時 ':'')+String(m).padStart(2,'0')+' 分 '+String(s).padStart(2,'0')+' 秒';
+    const nt=new Date(nextTs);
+    nxt.textContent='下次餵奶：'+nt.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+  }
+}
+
+// ── 預排系統通知（背景提醒核心）─────────────────────
+let scheduledNotifTimeout = null;
+
+function scheduleNotification(nextTs){
+  // 清除上一次排程
+  clearTimeout(scheduledNotifTimeout);
+  if(!alarmOn) return;
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const delay = nextTs - Date.now();
+  if(delay <= 0) return; // 已經過了
+
+  const nextTime = new Date(nextTs).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+  scheduledNotifTimeout = setTimeout(()=>{
+    // App 在前景：由 tickCD 處理（有聲音 + 彈窗）
+    // App 在背景：發系統通知（有系統通知聲）
+    if(document.visibilityState === 'hidden'){
+      new Notification('🍼 餵奶時間到了！', {
+        body: '距上次餵奶已達設定間隔，準備餵奶吧 🌸',
+        icon: './icons/icon-192.png',
+        tag: 'nursing-alarm',
+        renotify: true,
+        requireInteraction: true   // 通知不自動消失，需手動關閉
+      });
+    }
+    // 若 App 在前景，tickCD 的 setInterval 會處理彈窗 + 聲音，不重複發通知
+  }, delay);
+
+  showToast('🔔 已排定 '+nextTime+' 提醒');
+}
+
+// ── Settings ──────────────────────────────────────────
+function loadSettings(){
+  const s = JSON.parse(localStorage.getItem('app_settings')||'{}');
+  if(s.lineToken)   document.getElementById('line-token').value = s.lineToken;
+  if(s.lineUserId)  document.getElementById('line-user-id').value = s.lineUserId;
+  if(s.email)       document.getElementById('notify-email').value = s.email;
+  if(s.ejService)   document.getElementById('emailjs-service').value = s.ejService;
+  if(s.ejTemplate)  document.getElementById('emailjs-template').value = s.ejTemplate;
+  if(s.ejPubKey)    document.getElementById('emailjs-pubkey').value = s.ejPubKey;
+  if(s.timerMaxH)   document.getElementById('timer-max-hours').value = s.timerMaxH;
+  document.getElementById('notif-30min').checked  = s.notif30min !== false;
+  document.getElementById('notif-ontime').checked = s.notifOntime !== false;
+}
+
+function saveSettings(){
+  const s = {
+    lineToken:   document.getElementById('line-token').value.trim(),
+    lineUserId:  document.getElementById('line-user-id').value.trim(),
+    email:       document.getElementById('notify-email').value.trim(),
+    ejService:   document.getElementById('emailjs-service').value.trim(),
+    ejTemplate:  document.getElementById('emailjs-template').value.trim(),
+    ejPubKey:    document.getElementById('emailjs-pubkey').value.trim(),
+    timerMaxH:   document.getElementById('timer-max-hours').value,
+    notif30min:  document.getElementById('notif-30min').checked,
+    notifOntime: document.getElementById('notif-ontime').checked,
+  };
+  localStorage.setItem('app_settings', JSON.stringify(s));
+  localStorage.setItem('setting_timer_max_hours', s.timerMaxH);
+  showToast('✅ 設定已儲存');
+}
+
+function getSettings(){
+  return JSON.parse(localStorage.getItem('app_settings')||'{}');
+}
+
+// ── Line Notify ───────────────────────────────────────
+// 透過 Cloudflare Worker 代理避免 CORS
+const LINE_PROXY = 'https://arcar.kftseng2oo1.workers.dev/line-notify';
+
+async function sendLineNotify(message){
+  const s = getSettings();
+  if(!s.lineToken || !s.lineUserId) return false;
+  try {
+    const res = await fetch(LINE_PROXY, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        token:   s.lineToken,
+        userId:  s.lineUserId,
+        message: message
+      })
+    });
+    return res.ok;
+  } catch(e){ return false; }
+}
+
+async function testLineNotify(){
+  const el = document.getElementById('line-status');
+  el.textContent = '發送中…'; el.style.color = 'var(--light-text)';
+  const ok = await sendLineNotify('🍼 餵奶日記測試通知\n這是一則測試訊息，LINE 通知正常運作！');
+  if(ok){
+    el.textContent = '✅ LINE 通知發送成功！'; el.style.color = 'var(--sage-dark)';
+  } else {
+    el.textContent = '❌ 發送失敗，請確認 Token 和 User ID'; el.style.color = '#c62828';
+  }
+}
+
+// ── Email (EmailJS) ───────────────────────────────────
+async function sendEmail(subject, body){
+  const s = getSettings();
+  if(!s.email || !s.ejService || !s.ejTemplate || !s.ejPubKey) return false;
+  try {
+    // 動態載入 EmailJS SDK
+    if(!window.emailjs){
+      await new Promise((res,rej)=>{
+        const sc = document.createElement('script');
+        sc.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+        sc.onload = res; sc.onerror = rej;
+        document.head.appendChild(sc);
+      });
+      window.emailjs.init({ publicKey: s.ejPubKey });
+    }
+    await window.emailjs.send(s.ejService, s.ejTemplate, {
+      to_email: s.email,
+      subject:  subject,
+      message:  body,
+    });
+    return true;
+  } catch(e){ console.error(e); return false; }
+}
+
+async function testEmail(){
+  const el = document.getElementById('email-status');
+  el.textContent = '發送中…'; el.style.color = 'var(--light-text)';
+  const ok = await sendEmail('🍼 餵奶日記測試', '這是來自餵奶日記的測試郵件！');
+  if(ok){
+    el.textContent = '✅ Email 發送成功！'; el.style.color = 'var(--sage-dark)';
+  } else {
+    el.textContent = '❌ 發送失敗，請確認 EmailJS 設定'; el.style.color = '#c62828';
+  }
+}
+
+// ── 整合通知（餵奶時間排程）────────────────────────────
+let notif30Timeout = null;
+let notifOntimeTimeout = null;
+
+function scheduleExternalNotify(nextTs){
+  clearTimeout(notif30Timeout);
+  clearTimeout(notifOntimeTimeout);
+  const s = getSettings();
+  const nextTime = new Date(nextTs).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+
+  // 提前 30 分鐘
+  if(s.notif30min !== false){
+    const delay30 = nextTs - 30*60*1000 - Date.now();
+    if(delay30 > 0){
+      notif30Timeout = setTimeout(async ()=>{
+        const msg = `🍼 餵奶提醒\n距離下次餵奶還有 30 分鐘\n預定時間：${nextTime}`;
+        sendLineNotify(msg);
+        sendEmail('🍼 餵奶提醒（30分鐘前）', msg);
+      }, delay30);
+    }
+  }
+
+  // 時間到當下
+  if(s.notifOntime !== false){
+    const delayOn = nextTs - Date.now();
+    if(delayOn > 0){
+      notifOntimeTimeout = setTimeout(async ()=>{
+        const msg = `🍼 餵奶時間到了！\n現在是 ${nextTime}，寶寶肚子餓囉 🌸`;
+        sendLineNotify(msg);
+        sendEmail('🍼 餵奶時間到了！', msg);
+      }, delayOn);
+    }
+  }
+}
+
+// ── Save Bottle ───────────────────────────────────────
+function saveBottleRecord(){
+  const cc=parseInt(document.getElementById('actual-cc').value);
+  const interval=parseFloat(document.getElementById('record-interval').value);
+  if(!cc){showToast('請選擇喝了多少 CC 🍼');return;}
+  if(!interval){showToast('請選擇下次間隔時間 ⏰');return;}
+  const now=new Date();
+  bottleRecords.unshift({id:Date.now(),type:'bottle',cc,interval,
+    prepCC:parseInt(document.getElementById('prep-cc').value)||0,
+    notes:document.getElementById('bottle-notes').value.trim(),
+    date:now.toLocaleDateString('zh-TW'),
+    time:now.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),ts:now.getTime()});
+  saveAll();
+  showToast('奶瓶紀錄已儲存 🍼');
+  document.getElementById('actual-cc').value='';
+  document.getElementById('bottle-notes').value='';
+  updateBottleVisual();
+  // sync interval dropdown and restart countdown
+  const selH=document.getElementById('interval-hours');
+  for(let o of selH.options){if(parseFloat(o.value)===interval){selH.value=o.value;break;}}
+  updateCountdown();
+  updateSummary();
+  // 預排背景通知
+  if(alarmOn){
+    const nextTs = now.getTime() + interval * 3600000;
+    scheduleNotification(nextTs);
+  }
+  // Line / Email 外部通知
+  const nextTs = now.getTime() + interval * 3600000;
+  scheduleExternalNotify(nextTs);
+  // 顯示手機鬧鐘提示
+  showClockHint(nextTs);
+}
+
+// ── 手機鬧鐘提示 ──────────────────────────────────────
+let _hintTimeStr = '';
+
+function showClockHint(nextTs){
+  const t = new Date(nextTs);
+  _hintTimeStr = t.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('clock-hint-time').textContent = _hintTimeStr;
+  document.getElementById('clock-hint-overlay').style.display = 'flex';
+  // 重置複製按鈕
+  const btn = document.getElementById('copy-btn');
+  if(btn){ btn.textContent = '📋 複製時間'; btn.style.background = 'var(--mauve)'; }
+}
+
+function copyAlarmTime(){
+  const btn = document.getElementById('copy-btn');
+  navigator.clipboard.writeText(_hintTimeStr).then(()=>{
+    btn.textContent = '✅ 已複製！';
+    btn.style.background = 'var(--sage-dark)';
+  }).catch(()=>{
+    // 降版：選取文字
+    const el = document.getElementById('clock-hint-time');
+    const range = document.createRange();
+    range.selectNode(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    btn.textContent = '✅ 請長按複製';
+    btn.style.background = 'var(--sage-dark)';
+  });
+}
+
+function copyAndHint(){
+  const btn = document.getElementById('copy-go-btn');
+  navigator.clipboard.writeText(_hintTimeStr).then(()=>{
+    btn.textContent = '✅ 已複製！請切換到時鐘 App';
+    btn.style.background = 'var(--sage-dark)';
+  }).catch(()=>{
+    // 降版處理
+    const el = document.getElementById('clock-hint-time');
+    const range = document.createRange();
+    range.selectNode(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    btn.textContent = '✅ 請長按時間文字複製';
+    btn.style.background = 'var(--sage-dark)';
+  });
+}
+
+// ── Summary ───────────────────────────────────────────
+function updateSummary(){
+  const today=new Date().toLocaleDateString('zh-TW');
+  const tr=records.filter(r=>r.date===today);
+  document.getElementById('today-count').textContent=tr.length;
+  document.getElementById('today-mins').textContent=tr.reduce((a,r)=>a+r.duration,0);
+  const allLast=[...records,...bottleRecords].sort((a,b)=>b.ts-a.ts);
+  if(allLast.length>0){
+    const d=Math.floor((Date.now()-allLast[0].ts)/60000);
+    document.getElementById('last-feed').textContent=d<60?d+'分':Math.floor(d/60)+'時';
+  }
+}
+
+// ── History ───────────────────────────────────────────
+function fmt(secs){ return String(Math.floor(secs/60)).padStart(2,'0')+':'+String(secs%60).padStart(2,'0'); }
+function renderHistory(){
+  const fd=document.getElementById('filter-date').value;
+  const all=[...records.map(r=>({...r,_t:'breast'})),...bottleRecords.map(r=>({...r,_t:'bottle'}))]
+    .sort((a,b)=>b.ts-a.ts);
+  let f=all;
+  if(fd){const d=new Date(fd).toLocaleDateString('zh-TW');f=all.filter(r=>r.date===d);}
+  document.getElementById('history-section-title').textContent=
+    fd?fd+' 的紀錄（'+f.length+' 筆）':'所有紀錄（'+f.length+' 筆）';
+  const list=document.getElementById('history-list');
+  if(!f.length){list.innerHTML='<div class="empty"><div class="eicon">🌙</div><p>還沒有紀錄喔</p></div>';return;}
+  const bl={left:'左側',right:'右側',both:'雙側'};
+  const bi={left:'◑',right:'◐',both:'◉'};
+  const ic={left:'i-left',right:'i-right',both:'i-both'};
+  list.innerHTML=f.map((r,i)=>{
+    if(r._t==='bottle') return `<div class="rec-item" style="animation-delay:${i*0.04}s">
+      <div class="rec-icon i-bottle">🍼</div>
+      <div class="rec-info">
+        <div class="rec-main">奶瓶 <span class="badge badge-blue">${r.cc} CC</span><span class="badge badge-blue">間隔 ${r.interval}h</span></div>
+        <div class="rec-sub">${r.notes||'─'}</div>
+      </div>
+      <div class="rec-time"><div>${r.time}</div><div style="font-size:0.68rem;margin-top:2px">${r.date}</div></div>
+      <button class="rec-del" onclick="deleteRecord('bottle','${r.id}')">✕</button>
+    </div>`;
+    return `<div class="rec-item" style="animation-delay:${i*0.04}s">
+      <div class="rec-icon ${ic[r.breast]}">${bi[r.breast]}</div>
+      <div class="rec-info">
+        <div class="rec-main">${bl[r.breast]} <span class="badge">${r.duration} 分鐘</span></div>
+        <div class="rec-sub">${r.breast==='both'&&r.leftSecs?'左 '+fmt(r.leftSecs)+' ／ 右 '+fmt(r.rightSecs)+(r.notes?' · '+r.notes:''):r.notes||'─'}</div>
+      </div>
+      <div class="rec-time"><div>${r.time}</div><div style="font-size:0.68rem;margin-top:2px">${r.date}</div></div>
+      <button class="rec-del" onclick="deleteRecord('breast','${r.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function deleteRecord(type,id){
+  if(!confirm('確定要刪除？'))return;
+  if(type==='breast') records=records.filter(r=>r.id!=id);
+  else bottleRecords=bottleRecords.filter(r=>r.id!=id);
+  saveAll();updateSummary();renderHistory();showToast('已刪除 🗑');
+}
+
+// ── Stats ─────────────────────────────────────────────
+function renderStats(){
+  const today=new Date().toLocaleDateString('zh-TW');
+  const bT=bottleRecords.filter(r=>r.date===today);
+  document.getElementById('b-today').textContent=bT.length+' 次';
+  document.getElementById('b-cc-today').textContent=bT.reduce((a,r)=>a+r.cc,0)+' CC';
+  document.getElementById('b-avg').textContent=bottleRecords.length?
+    Math.round(bottleRecords.reduce((a,r)=>a+r.cc,0)/bottleRecords.length)+' CC':'0 CC';
+  document.getElementById('b-total').textContent=bottleRecords.length+' 次';
+  const total=records.length, totalMins=records.reduce((a,r)=>a+r.duration,0);
+  document.getElementById('total-count').textContent=total+' 次';
+  document.getElementById('total-time').textContent=totalMins+' 分鐘';
+  document.getElementById('avg-time').textContent=total?Math.round(totalMins/total)+' 分鐘':'0 分鐘';
+  document.getElementById('lr-ratio').textContent=
+    records.filter(r=>r.breast==='left'||r.breast==='both').length+' / '+
+    records.filter(r=>r.breast==='right'||r.breast==='both').length;
+  const days=[], now=new Date();
+  for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push({date:d.toLocaleDateString('zh-TW'),label:['日','一','二','三','四','五','六'][d.getDay()]});}
+  const all=[...records,...bottleRecords];
+  const mx=Math.max(...days.map(d=>all.filter(r=>r.date===d.date).length),1);
+  document.getElementById('week-chart').innerHTML=days.map(d=>{
+    const c=all.filter(r=>r.date===d.date).length;
+    return`<div class="b-row"><span class="b-day">${d.label}</span><div class="b-track"><div class="b-fill" style="width:${Math.round(c/mx*100)}%"></div></div><span class="b-num">${c}</span></div>`;
+  }).join('');
+}
+
+// ── Storage / Init ────────────────────────────────────
+function saveAll(){
+  localStorage.setItem('nursing_records',JSON.stringify(records));
+  localStorage.setItem('bottle_records',JSON.stringify(bottleRecords));
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+updateSummary();
+const now=new Date();
+document.getElementById('filter-date').value=
+  `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+setInterval(updateSummary,60000);
+
+// ── 恢復鬧鐘開關狀態 ─────────────────────────────────
+if(localStorage.getItem('alarm_on') === '1'){
+  alarmOn = true;
+  document.getElementById('alarm-btn').classList.add('alarm-on');
+  document.getElementById('alarm-slash').style.display = 'none';
+  document.getElementById('alarm-status').style.display = 'block';
+  // AudioContext 需要等用戶互動才能建立（由上方 click 監聽器處理）
+}
+
+// 載入設定
+loadSettings();
+
+// ── PWA Service Worker ────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg=>console.log('SW registered:', reg.scope))
+      .catch(err=>console.log('SW error:', err));
+  });
+}
+
+window.addEventListener('appinstalled', ()=>{
+  showToast('🎉 已成功加入主畫面！');
+});
+</script>
+
+<!-- PWA 安裝橫幅 -->
+
+
+</body>
+</html>
