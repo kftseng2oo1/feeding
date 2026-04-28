@@ -1115,19 +1115,27 @@ async function scheduleRemoteNotify(nextTs){
   const s = getSettings();
   if(!s.lineToken && !s.email) return;
   try {
-    await fetch('https://arcar.kftseng2oo1.workers.dev/schedule-notify', {
+    const res = await fetch('https://arcar.kftseng2oo1.workers.dev/schedule-notify', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        lineToken:   s.lineToken   || null,
-        userId:      s.lineUserId  || null,
-        email:       s.email       || null,
-        nextTs:      nextTs,
-        notify30:    s.notif30min  !== false,
+        lineToken:    s.lineToken   || null,
+        userId:       s.lineUserId  || null,
+        email:        s.email       || null,
+        nextTs:       nextTs,
+        notify30:     s.notif30min  !== false,
         notifyOntime: s.notifOntime !== false,
       })
     });
-  } catch(e){ console.log('排程通知失敗:', e); }
+    const data = await res.json();
+    if(res.ok){
+      showToast('☁️ 背景通知排程已儲存');
+    } else {
+      showToast('⚠️ 排程失敗：' + (data.error || res.status));
+    }
+  } catch(e){
+    showToast('⚠️ 排程連線失敗：' + e.message);
+  }
 }
 
 // ── Settings ──────────────────────────────────────────
