@@ -250,8 +250,16 @@
     <div class="card">
       <div class="card-title" style="justify-content:space-between;">
         <span>⏰ 下次餵奶倒數</span>
-        <button id="alarm-btn" onclick="toggleAlarm()" title="開啟/關閉提醒">
-          <svg id="alarm-icon" width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <!-- 重置按鈕 -->
+          <button id="reset-btn" onclick="resetCountdown()" title="取消本次提醒並重置"
+            style="background:none;border:2px solid var(--blush);border-radius:50%;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-size:1rem;">
+            🔄
+          </button>
+          <!-- 鬧鐘按鈕 -->
+          <button id="alarm-btn" onclick="toggleAlarm()" title="開啟/關閉提醒"
+            style="background:none;border:2px solid var(--blush);border-radius:50%;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s;">
+            <svg id="alarm-icon" width="26" height="26" viewBox="0 0 28 28" fill="none">
             <circle cx="14" cy="15" r="9" stroke="#c98b7a" stroke-width="2" fill="#fdf6ee"/>
             <line x1="14" y1="9" x2="14" y2="15" stroke="#c98b7a" stroke-width="2" stroke-linecap="round"/>
             <line x1="14" y1="15" x2="18" y2="17" stroke="#c98b7a" stroke-width="2" stroke-linecap="round"/>
@@ -974,6 +982,30 @@ function snoozeAlarm(){
   }, 5 * 60 * 1000);
 }
 
+function resetCountdown(){
+  // 重置所有鬧鐘與倒數狀態
+  alarmFired = false;
+  alarmDismissedTs = null;
+  snoozeUntil = null;
+  clearTimeout(snoozeTimeout);
+  clearTimeout(_notif30Timer);
+  clearTimeout(_notifOntimeTimer);
+  // 關閉彈窗與音效
+  stopAlarmSound();
+  document.getElementById('alarm-overlay').style.display = 'none';
+  document.getElementById('alarm-overlay').classList.remove('show');
+  document.getElementById('alarm-icon').style.animation = 'none';
+  // 清除 localStorage 通知計畫
+  localStorage.removeItem('notify_plan');
+  // 重置倒數顯示
+  document.getElementById('countdown-display').textContent = '-- : --';
+  document.getElementById('countdown-display').classList.remove('overdue');
+  document.getElementById('countdown-next').textContent = '已重置，請儲存下次紀錄';
+  // 停止倒數 interval
+  clearInterval(countdownInterval);
+  showToast('🔄 已重置，等待下次紀錄');
+}
+
 // ── Countdown ─────────────────────────────────────────
 function onIntervalChange(){
   const v=document.getElementById('interval-hours').value;
@@ -1075,6 +1107,26 @@ function scheduleNotification(nextTs){
   }, delay);
 
   showToast('🔔 已排定 '+nextTime+' 提醒');
+}
+
+// ── 遠端排程通知（透過 Worker Cron，App 不需開著）────────
+async function scheduleRemoteNotify(nextTs){
+  const s = getSettings();
+  if(!s.lineToken && !s.email) return;
+  try {
+    await fetch('https://arcar.kftseng2oo1.workers.dev/schedule-notify', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        lineToken:   s.lineToken   || null,
+        userId:      s.lineUserId  || null,
+        email:       s.email       || null,
+        nextTs:      nextTs,
+        notify30:    s.notif30min  !== false,
+        notifyOntime: s.notifOntime !== false,
+      })
+    });
+  } catch(e){ console.log('排程通知失敗:', e); }
 }
 
 // ── Settings ──────────────────────────────────────────
@@ -1228,6 +1280,16 @@ function saveBottleRecord(){
   document.getElementById('actual-cc').value='';
   document.getElementById('bottle-notes').value='';
   updateBottleVisual();
+  // 新紀錄儲存時重置鬧鐘狀態，避免舊提醒重複出現
+  alarmFired = false;
+  alarmDismissedTs = null;
+  snoozeUntil = null;
+  clearTimeout(snoozeTimeout);
+  // 關掉彈窗（如果還開著）
+  document.getElementById('alarm-overlay').style.display = 'none';
+  document.getElementById('alarm-overlay').classList.remove('show');
+  document.getElementById('alarm-icon').style.animation = 'none';
+  stopAlarmSound();
   // sync interval dropdown and restart countdown
   const selH=document.getElementById('interval-hours');
   for(let o of selH.options){if(parseFloat(o.value)===interval){selH.value=o.value;break;}}
@@ -1247,26 +1309,52 @@ function saveBottleRecord(){
   showClockHint(nextTs);
 }
 
-// 儲存後立即發送確認通知
+// 儲存後立即發送確認通知，並預排 30分鐘前 + 時間到 的通知
+let _notif30Timer = null;
+let _notifOntimeTimer = null;
+
 async function sendConfirmNotify(nextTs){
   const nextTime = new Date(nextTs).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
-  const msg = `✅ 餵奶紀錄已儲存\n下次餵奶時間：${nextTime}\n時間到前 30 分鐘會再提醒您 🌙`;
   const s = getSettings();
-  // 檢查設定是否存在
   if(!s.lineToken && !s.email){
     showToast('⚠️ 請先到設定填入 LINE Token 或 Email');
     return;
   }
+
+  // ① 立即發：儲存確認
+  const msgSave = `✅ 餵奶紀錄已儲存\n下次餵奶時間：${nextTime}\n時間到前 30 分鐘會再提醒您 🌙`;
   const results = await Promise.all([
-    s.lineToken ? sendLineNotify(msg) : Promise.resolve(null),
-    s.email     ? sendEmail('✅ 餵奶紀錄已儲存', msg) : Promise.resolve(null),
+    s.lineToken ? sendLineNotify(msgSave) : Promise.resolve(null),
+    s.email     ? sendEmail('✅ 餵奶紀錄已儲存', msgSave) : Promise.resolve(null),
   ]);
-  const lineOk  = results[0];
-  const emailOk = results[1];
-  if(lineOk)  showToast('📱 LINE 通知已發送！');
-  if(emailOk) showToast('📧 Email 通知已發送！');
-  if(lineOk===false)  showToast('⚠️ LINE 發送失敗，請檢查設定');
-  if(emailOk===false) showToast('⚠️ Email 發送失敗，請檢查設定');
+  if(results[0]) showToast('📱 LINE 通知已發送！');
+  if(results[1]) showToast('📧 Email 通知已發送！');
+
+  // 傳送排程到 Worker Cron（App 不需開著也能收到通知）
+  scheduleRemoteNotify(nextTs);
+
+  // ② 預排：30分鐘前提醒（App 開著時的備援）
+  clearTimeout(_notif30Timer);
+  clearTimeout(_notifOntimeTimer);
+  const delay30   = nextTs - 30*60*1000 - Date.now();
+  const delayOntime = nextTs - Date.now();
+
+  if(s.notif30min !== false && delay30 > 0){
+    _notif30Timer = setTimeout(async ()=>{
+      const msg30 = `🍼 餵奶提醒\n距離下次餵奶還有 30 分鐘\n預定時間：${nextTime}`;
+      if(s.lineToken) sendLineNotify(msg30);
+      if(s.email)     sendEmail('🍼 餵奶提醒（30分鐘前）', msg30);
+    }, delay30);
+  }
+
+  // ③ 預排：時間到
+  if(s.notifOntime !== false && delayOntime > 0){
+    _notifOntimeTimer = setTimeout(async ()=>{
+      const msgOn = `🍼 餵奶時間到了！\n現在是 ${nextTime}，寶寶肚子餓囉 🌸`;
+      if(s.lineToken) sendLineNotify(msgOn);
+      if(s.email)     sendEmail('🍼 餵奶時間到了！', msgOn);
+    }, delayOntime);
+  }
 }
 
 // ── 手機鬧鐘提示 ──────────────────────────────────────
