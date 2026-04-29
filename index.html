@@ -250,25 +250,17 @@
     <div class="card">
       <div class="card-title" style="justify-content:space-between;">
         <span>⏰ 下次餵奶倒數</span>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <!-- 重置按鈕 -->
-          <button id="reset-btn" onclick="resetCountdown()" title="取消本次提醒並重置"
-            style="background:none;border:2px solid var(--blush);border-radius:50%;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s;font-size:1rem;">
-            🔄
-          </button>
-          <!-- 鬧鐘按鈕 -->
-          <button id="alarm-btn" onclick="toggleAlarm()" title="開啟/關閉提醒"
-            style="background:none;border:2px solid var(--blush);border-radius:50%;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s;">
-            <svg id="alarm-icon" width="26" height="26" viewBox="0 0 28 28" fill="none">
-              <circle cx="14" cy="15" r="9" stroke="#c98b7a" stroke-width="2" fill="#fdf6ee"/>
-              <line x1="14" y1="9" x2="14" y2="15" stroke="#c98b7a" stroke-width="2" stroke-linecap="round"/>
-              <line x1="14" y1="15" x2="18" y2="17" stroke="#c98b7a" stroke-width="2" stroke-linecap="round"/>
-              <path d="M6 8 Q8 5 10 7" stroke="#c98b7a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-              <path d="M22 8 Q20 5 18 7" stroke="#c98b7a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-              <line id="alarm-slash" x1="5" y1="5" x2="23" y2="23" stroke="#e05050" stroke-width="2.2" stroke-linecap="round" style="display:none"/>
-            </svg>
-          </button>
-        </div>
+        <button id="alarm-btn" onclick="toggleAlarm()" title="開啟/關閉提醒"
+          style="background:none;border:2px solid var(--blush);border-radius:50%;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s;">
+          <svg id="alarm-icon" width="26" height="26" viewBox="0 0 28 28" fill="none">
+            <circle cx="14" cy="15" r="9" stroke="#c98b7a" stroke-width="2" fill="#fdf6ee"/>
+            <line x1="14" y1="9" x2="14" y2="15" stroke="#c98b7a" stroke-width="2" stroke-linecap="round"/>
+            <line x1="14" y1="15" x2="18" y2="17" stroke="#c98b7a" stroke-width="2" stroke-linecap="round"/>
+            <path d="M6 8 Q8 5 10 7" stroke="#c98b7a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <path d="M22 8 Q20 5 18 7" stroke="#c98b7a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <line id="alarm-slash" x1="5" y1="5" x2="23" y2="23" stroke="#e05050" stroke-width="2.2" stroke-linecap="round" style="display:none"/>
+          </svg>
+        </button>
       </div>
       <div class="countdown-box">
         <div class="cd-label">距離下次餵奶</div>
@@ -287,42 +279,6 @@
         <div style="display:flex;gap:10px;justify-content:center;">
           <button onclick="dismissAlarm()" class="btn btn-success" style="padding:12px 28px;font-size:0.95rem;">✅ 知道了</button>
           <button onclick="snoozeAlarm()" class="btn btn-secondary" style="padding:12px 20px;font-size:0.95rem;">💤 再 5 分鐘</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 手機鬧鐘提示彈窗 -->
-    <div id="clock-hint-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;align-items:center;justify-content:center;">
-      <div style="background:var(--white);border-radius:28px;padding:28px 22px;margin:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:fadeUp 0.3s ease both;max-width:320px;width:100%;">
-        <div style="font-size:2.4rem;margin-bottom:10px;">⏰</div>
-        <div style="font-size:1.05rem;font-weight:600;color:var(--deep);margin-bottom:14px;">設定手機鬧鐘</div>
-
-        <!-- 時間顯示 + 複製 -->
-        <div style="background:var(--blush);border-radius:16px;padding:14px;margin-bottom:14px;">
-          <div style="font-size:0.75rem;color:var(--light-text);margin-bottom:4px;">下次餵奶時間</div>
-          <div style="font-size:2.2rem;font-weight:300;color:var(--mauve);letter-spacing:2px;" id="clock-hint-time">--:--</div>
-          <button onclick="copyAlarmTime()" id="copy-btn" style="margin-top:8px;background:var(--mauve);color:white;border:none;border-radius:30px;padding:7px 20px;font-size:0.8rem;cursor:pointer;">
-            📋 複製時間
-          </button>
-        </div>
-
-        <!-- 步驟說明 -->
-        <div style="text-align:left;background:#f9f6f3;border-radius:14px;padding:12px 14px;margin-bottom:16px;font-size:0.78rem;color:var(--light-text);line-height:1.9;">
-          <div style="font-weight:600;color:var(--deep);margin-bottom:4px;">設定步驟：</div>
-          <div>① 點「📋 複製時間」</div>
-          <div>② 按手機下方 Home 鍵或上滑回主畫面</div>
-          <div>③ 找到並開啟<b style="color:var(--deep);">「時鐘」App</b></div>
-          <div>④ 選「鬧鐘」→ 右上角 <b style="color:var(--deep);">＋</b></div>
-          <div>⑤ 輸入複製的時間，儲存</div>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <button onclick="copyAndHint()" style="background:var(--rose);color:white;border:none;border-radius:50px;padding:13px;font-size:0.9rem;cursor:pointer;font-weight:500;" id="copy-go-btn">
-            📋 複製時間，去設定鬧鐘
-          </button>
-          <button onclick="document.getElementById('clock-hint-overlay').style.display='none'" style="background:transparent;color:var(--light-text);border:none;padding:8px;font-size:0.82rem;cursor:pointer;">
-            稍後自行設定
-          </button>
         </div>
       </div>
     </div>
@@ -497,46 +453,64 @@
           <option value="0">不限制</option>
         </select>
       </div>
-      <div style="font-size:0.75rem;color:var(--light-text);">儲存紀錄後計時器也會自動 reset</div>
+      <div style="font-size:0.75rem;color:var(--light-text);margin-bottom:12px;">儲存紀錄後計時器也會自動 reset</div>
+      <button onclick="resetCountdown()" class="btn btn-secondary" style="width:100%;font-size:0.85rem;">
+        🔄 立即重置倒數計時
+      </button>
     </div>
 
-    <!-- LINE Messaging API -->
+    <!-- LINE Channel Token（共用，只需設定一次） -->
     <div class="card">
-      <div class="card-title">💬 LINE 通知設定</div>
-      <div style="font-size:0.78rem;color:var(--light-text);margin-bottom:12px;line-height:1.6;">
-        使用 LINE Messaging API 發送餵奶提醒通知。
-      </div>
-      <div style="margin-bottom:10px;">
-        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">Channel Access Token</label>
-        <input type="password" class="inp" id="line-token" placeholder="貼上新的 Channel Access Token" style="width:100%;">
-      </div>
-      <div style="margin-bottom:10px;">
-        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">接收通知的 LINE User ID</label>
-        <input type="text" class="inp" id="line-user-id" placeholder="U1e68f3c5a36277ff789c0f4458612d98" style="width:100%;">
-        <div style="font-size:0.7rem;color:var(--light-text);margin-top:3px;">LINE Developers Console → Basic settings → Your user ID</div>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <button onclick="testLineNotify()" class="btn btn-secondary" style="flex:1;font-size:0.82rem;">📨 測試發送</button>
-        <button onclick="saveSettings()" class="btn btn-success" style="flex:1;font-size:0.82rem;">💾 儲存</button>
-      </div>
-      <div id="line-status" style="font-size:0.75rem;text-align:center;color:var(--light-text);min-height:18px;"></div>
+      <div class="card-title">🔑 LINE Channel Token</div>
+      <div style="font-size:0.75rem;color:var(--light-text);margin-bottom:10px;line-height:1.6;">所有通知對象共用同一個 Bot Token，只需設定一次</div>
+      <input type="password" class="inp" id="line-channel-token" placeholder="貼上 Channel Access Token" style="width:100%;margin-bottom:8px;">
+      <button onclick="saveLineToken()" class="btn btn-success" style="width:100%;font-size:0.85rem;">💾 儲存 Token</button>
+      <div id="token-status" style="font-size:0.75rem;text-align:center;color:var(--light-text);margin-top:6px;min-height:16px;"></div>
     </div>
 
-    <!-- Email 通知 -->
+    <!-- 通知對象清單 -->
     <div class="card">
-      <div class="card-title">📧 Email 通知設定</div>
-      <div style="font-size:0.78rem;color:var(--light-text);margin-bottom:12px;line-height:1.6;">
-        透過伺服器發送 Email 提醒，只需填入收件信箱即可。
+      <div class="card-title" style="justify-content:space-between;">
+        <span>👥 通知對象</span>
+        <button onclick="openNotifyForm()" style="background:var(--rose);color:white;border:none;border-radius:20px;padding:5px 14px;font-size:0.78rem;cursor:pointer;">＋ 新增</button>
       </div>
-      <div style="margin-bottom:10px;">
-        <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">收件 Email</label>
-        <input type="email" class="inp" id="notify-email" placeholder="your@email.com" style="width:100%;">
+      <div style="font-size:0.75rem;color:var(--light-text);margin-bottom:12px;">每人可獨立設定 LINE 和 Email，時間到會同時通知所有人</div>
+      <div id="notify-list"></div>
+      <div id="notify-empty" style="text-align:center;padding:16px;color:var(--light-text);font-size:0.82rem;">尚未設定通知對象<br>點上方「＋ 新增」加入</div>
+    </div>
+
+    <!-- 新增/編輯通知對象彈窗 -->
+    <div id="notify-form-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:400;align-items:center;justify-content:center;">
+      <div style="background:var(--white);border-radius:24px;padding:24px;margin:20px;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+        <div style="font-size:1rem;font-weight:600;color:var(--deep);margin-bottom:16px;" id="notify-form-title">新增通知對象</div>
+        <input type="hidden" id="notify-form-idx" value="-1">
+        <div style="margin-bottom:10px;">
+          <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">暱稱</label>
+          <input type="text" class="inp" id="nf-name" placeholder="例：媽媽、爸爸" style="width:100%;">
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">LINE User ID（選填）</label>
+          <input type="text" class="inp" id="nf-line-id" placeholder="U1e68f3c5..." style="width:100%;">
+          <div style="font-size:0.72rem;color:var(--light-text);margin-top:4px;line-height:1.6;background:#f9f6f3;border-radius:8px;padding:8px;">
+            💡 <b>不知道 User ID？</b><br>
+            加 LINE Bot 好友 → Bot 會自動回覆你的 ID<br>
+            Bot ID：<b>@517nsygr</b>
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">Email（選填）</label>
+          <input type="email" class="inp" id="nf-email" placeholder="your@email.com" style="width:100%;">
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="saveNotifyPerson()" class="btn btn-success" style="flex:1;">💾 儲存</button>
+          <button onclick="document.getElementById('notify-form-overlay').style.display='none'" class="btn btn-secondary" style="flex:1;">取消</button>
+        </div>
+        <div id="nf-test-btns" style="display:flex;gap:8px;margin-top:8px;">
+          <button onclick="testNotifyPerson('line')" class="btn btn-secondary" style="flex:1;font-size:0.78rem;">📱 測試 LINE</button>
+          <button onclick="testNotifyPerson('email')" class="btn btn-secondary" style="flex:1;font-size:0.78rem;">📧 測試 Email</button>
+        </div>
+        <div id="nf-status" style="font-size:0.75rem;text-align:center;color:var(--light-text);margin-top:8px;min-height:16px;"></div>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <button onclick="testEmail()" class="btn btn-secondary" style="flex:1;font-size:0.82rem;">📨 測試發送</button>
-        <button onclick="saveSettings()" class="btn btn-success" style="flex:1;font-size:0.82rem;">💾 儲存</button>
-      </div>
-      <div id="email-status" style="font-size:0.75rem;text-align:center;color:var(--light-text);min-height:18px;"></div>
     </div>
 
     <!-- 通知時機 -->
@@ -1112,48 +1086,48 @@ function scheduleNotification(nextTs){
 
 // ── 遠端排程通知（透過 Worker Cron，App 不需開著）────────
 async function scheduleRemoteNotify(nextTs){
+  if(!notifyPersons.length) return;
+  const token = getLineToken();
   const s = getSettings();
-  if(!s.lineToken && !s.email) return;
   try {
     const res = await fetch('https://arcar.kftseng2oo1.workers.dev/schedule-notify', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        lineToken:    s.lineToken   || null,
-        userId:       s.lineUserId  || null,
-        email:        s.email       || null,
+        lineToken:    token || null,
+        persons:      notifyPersons, // 傳整個清單
         nextTs:       nextTs,
         notify30:     s.notif30min  !== false,
         notifyOntime: s.notifOntime !== false,
       })
     });
     const data = await res.json();
-    if(res.ok){
-      showToast('☁️ 背景通知排程已儲存');
-    } else {
-      showToast('⚠️ 排程失敗：' + (data.error || res.status));
-    }
-  } catch(e){
-    showToast('⚠️ 排程連線失敗：' + e.message);
-  }
+    if(res.ok) showToast('☁️ 背景通知排程已儲存');
+    else showToast('⚠️ 排程失敗：' + (data.error || res.status));
+  } catch(e){ showToast('⚠️ 排程連線失敗：' + e.message); }
 }
 
 // ── Settings ──────────────────────────────────────────
+// notifyPersons: [{id, name, lineId, email}]
+let notifyPersons = [];
+const LINE_TOKEN_KEY = 'nursing_line_token'; // Channel Access Token 單獨存
+
 function loadSettings(){
   const s = JSON.parse(localStorage.getItem('app_settings')||'{}');
-  if(s.lineToken)  document.getElementById('line-token').value = s.lineToken;
-  if(s.lineUserId) document.getElementById('line-user-id').value = s.lineUserId;
-  if(s.email)      document.getElementById('notify-email').value = s.email;
-  if(s.timerMaxH)  document.getElementById('timer-max-hours').value = s.timerMaxH;
+  if(s.timerMaxH) document.getElementById('timer-max-hours').value = s.timerMaxH;
   document.getElementById('notif-30min').checked  = s.notif30min !== false;
   document.getElementById('notif-ontime').checked = s.notifOntime !== false;
+  // 載入 LINE Channel Token
+  const token = getLineToken();
+  const tokenInput = document.getElementById('line-channel-token');
+  if(token && tokenInput) tokenInput.value = token;
+  // 載入通知對象清單
+  notifyPersons = JSON.parse(localStorage.getItem('notify_persons')||'[]');
+  renderNotifyList();
 }
 
 function saveSettings(){
   const s = {
-    lineToken:   document.getElementById('line-token').value.trim(),
-    lineUserId:  document.getElementById('line-user-id').value.trim(),
-    email:       document.getElementById('notify-email').value.trim(),
     timerMaxH:   document.getElementById('timer-max-hours').value,
     notif30min:  document.getElementById('notif-30min').checked,
     notifOntime: document.getElementById('notif-ontime').checked,
@@ -1167,61 +1141,153 @@ function getSettings(){
   return JSON.parse(localStorage.getItem('app_settings')||'{}');
 }
 
-// ── Line Notify ───────────────────────────────────────
-// 透過 Cloudflare Worker 代理避免 CORS
-const LINE_PROXY = 'https://arcar.kftseng2oo1.workers.dev/line-notify';
+function getLineToken(){
+  return localStorage.getItem(LINE_TOKEN_KEY) || '';
+}
 
-async function sendLineNotify(message){
-  const s = getSettings();
-  if(!s.lineToken || !s.lineUserId) return false;
+// ── 通知對象清單 UI ────────────────────────────────────
+function renderNotifyList(){
+  const list = document.getElementById('notify-list');
+  const empty = document.getElementById('notify-empty');
+  if(!notifyPersons.length){ list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  list.innerHTML = notifyPersons.map((p,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--blush);">
+      <div>
+        <div style="font-size:0.88rem;font-weight:500;color:var(--deep);">${p.name || '未命名'}</div>
+        <div style="font-size:0.72rem;color:var(--light-text);margin-top:2px;">
+          ${p.lineId ? '📱 LINE ✅' : '📱 LINE ❌'} &nbsp;
+          ${p.email  ? '📧 Email ✅' : '📧 Email ❌'}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="openNotifyForm(${i})" style="background:var(--blush);color:var(--mauve);border:none;border-radius:16px;padding:5px 12px;font-size:0.75rem;cursor:pointer;">編輯</button>
+        <button onclick="deleteNotifyPerson(${i})" style="background:#fce8e8;color:#c62828;border:none;border-radius:16px;padding:5px 12px;font-size:0.75rem;cursor:pointer;">刪除</button>
+      </div>
+    </div>`).join('');
+}
+
+function openNotifyForm(idx){
+  const overlay = document.getElementById('notify-form-overlay');
+  const title   = document.getElementById('notify-form-title');
+  document.getElementById('notify-form-idx').value = idx !== undefined ? idx : -1;
+  document.getElementById('nf-status').textContent = '';
+  if(idx !== undefined && notifyPersons[idx]){
+    const p = notifyPersons[idx];
+    title.textContent = '編輯通知對象';
+    document.getElementById('nf-name').value    = p.name   || '';
+    document.getElementById('nf-line-id').value = p.lineId || '';
+    document.getElementById('nf-email').value   = p.email  || '';
+    document.getElementById('nf-test-btns').style.display = 'flex';
+  } else {
+    title.textContent = '新增通知對象';
+    document.getElementById('nf-name').value    = '';
+    document.getElementById('nf-line-id').value = '';
+    document.getElementById('nf-email').value   = '';
+    document.getElementById('nf-test-btns').style.display = 'none';
+  }
+  overlay.style.display = 'flex';
+}
+
+function saveNotifyPerson(){
+  const idx   = parseInt(document.getElementById('notify-form-idx').value);
+  const name  = document.getElementById('nf-name').value.trim()   || '未命名';
+  const lineId= document.getElementById('nf-line-id').value.trim();
+  const email = document.getElementById('nf-email').value.trim();
+  if(!lineId && !email){ showToast('請至少填入 LINE ID 或 Email'); return; }
+  const person = { id: Date.now().toString(), name, lineId, email };
+  if(idx >= 0){ notifyPersons[idx] = { ...notifyPersons[idx], ...person }; }
+  else { notifyPersons.push(person); }
+  localStorage.setItem('notify_persons', JSON.stringify(notifyPersons));
+  renderNotifyList();
+  document.getElementById('notify-form-overlay').style.display='none';
+  showToast('✅ 已儲存');
+}
+
+function deleteNotifyPerson(idx){
+  notifyPersons.splice(idx, 1);
+  localStorage.setItem('notify_persons', JSON.stringify(notifyPersons));
+  renderNotifyList();
+  showToast('🗑 已刪除');
+}
+
+async function testNotifyPerson(type){
+  const lineId = document.getElementById('nf-line-id').value.trim();
+  const email  = document.getElementById('nf-email').value.trim();
+  const name   = document.getElementById('nf-name').value.trim() || '測試';
+  const st     = document.getElementById('nf-status');
+  const token  = getLineToken();
+  st.textContent = '發送中…'; st.style.color = 'var(--light-text)';
+  const msg = `🍼 餵奶日記測試通知\n嗨 ${name}！LINE 通知正常運作 ✅`;
+  if(type === 'line'){
+    if(!lineId){ st.textContent='請填入 LINE User ID'; return; }
+    if(!token){ st.textContent='請先在下方設定 LINE Channel Token'; return; }
+    const ok = await sendLineToUser(token, lineId, msg);
+    st.textContent = ok ? '✅ LINE 測試成功！' : '❌ 發送失敗，請確認設定';
+    st.style.color = ok ? 'var(--sage-dark)' : '#c62828';
+  } else {
+    if(!email){ st.textContent='請填入 Email'; return; }
+    const ok = await sendEmail(`🍼 餵奶日記測試`, msg.replace(/\n/g,'<br>'));
+    st.textContent = ok ? '✅ Email 測試成功！' : '❌ 發送失敗';
+    st.style.color = ok ? 'var(--sage-dark)' : '#c62828';
+  }
+}
+
+// ── LINE Channel Token 設定 ───────────────────────────
+function saveLineToken(){
+  const token = document.getElementById('line-channel-token').value.trim();
+  if(!token){ showToast('請填入 Token'); return; }
+  localStorage.setItem(LINE_TOKEN_KEY, token);
+  document.getElementById('token-status').textContent = '✅ Token 已儲存';
+  document.getElementById('token-status').style.color = 'var(--sage-dark)';
+  showToast('✅ LINE Token 已儲存');
+}
+
+// ── LINE / Email 發送（多人版）────────────────────────
+const LINE_PROXY  = 'https://arcar.kftseng2oo1.workers.dev/line-notify';
+
+async function sendLineToUser(token, userId, message){
   try {
     const res = await fetch(LINE_PROXY, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        token:   s.lineToken,
-        userId:  s.lineUserId,
-        message: message
-      })
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ token, userId, message })
+    });
+    return res.ok;
+  } catch(e){ return false; }
+}
+
+// 對所有通知對象發送 LINE
+async function sendLineNotify(message){
+  const token   = getLineToken();
+  if(!token) return false;
+  const persons = notifyPersons.filter(p => p.lineId);
+  if(!persons.length) return false;
+  const results = await Promise.all(
+    persons.map(p => sendLineToUser(token, p.lineId, message))
+  );
+  return results.some(r => r);
+}
+
+async function sendEmail(subject, body){
+  const persons = notifyPersons.filter(p => p.email);
+  if(!persons.length) return false;
+  try {
+    const res = await fetch('https://arcar.kftseng2oo1.workers.dev/send-email', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ to: persons.map(p=>p.email), subject, message: body })
     });
     return res.ok;
   } catch(e){ return false; }
 }
 
 async function testLineNotify(){
-  const el = document.getElementById('line-status');
-  el.textContent = '發送中…'; el.style.color = 'var(--light-text)';
-  const ok = await sendLineNotify('🍼 餵奶日記測試通知\n這是一則測試訊息，LINE 通知正常運作！');
-  if(ok){
-    el.textContent = '✅ LINE 通知發送成功！'; el.style.color = 'var(--sage-dark)';
-  } else {
-    el.textContent = '❌ 發送失敗，請確認 Token 和 User ID'; el.style.color = '#c62828';
-  }
-}
-
-// ── Email (EmailJS) ───────────────────────────────────
-async function sendEmail(subject, body){
-  const s = getSettings();
-  if(!s.email) return false;
-  try {
-    const res = await fetch('https://arcar.kftseng2oo1.workers.dev/send-email', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ to: s.email, subject, message: body })
-    });
-    return res.ok;
-  } catch(e){ return false; }
+  const ok = await sendLineNotify('🍼 餵奶日記測試通知\nLINE 通知正常運作！');
+  showToast(ok ? '📱 LINE 測試成功！' : '❌ 發送失敗，請確認 Token 和 User ID');
 }
 
 async function testEmail(){
-  const el = document.getElementById('email-status');
-  el.textContent = '發送中…'; el.style.color = 'var(--light-text)';
   const ok = await sendEmail('🍼 餵奶日記測試', '這是來自餵奶日記的測試郵件，Email 通知正常運作！');
-  if(ok){
-    el.textContent = '✅ Email 發送成功！'; el.style.color = 'var(--sage-dark)';
-  } else {
-    el.textContent = '❌ 發送失敗，請確認 Email 是否正確'; el.style.color = '#c62828';
-  }
+  showToast(ok ? '📧 Email 測試成功！' : '❌ 發送失敗');
 }
 
 // ── 整合通知（改用 localStorage 儲存目標時間，tickCD 主動檢查）──
@@ -1314,8 +1380,6 @@ function saveBottleRecord(){
   scheduleExternalNotify(nextTs);
   // 立即發確認通知
   sendConfirmNotify(nextTs);
-  // 顯示手機鬧鐘提示
-  showClockHint(nextTs);
 }
 
 // 儲存後立即發送確認通知，並預排 30分鐘前 + 時間到 的通知
@@ -1325,16 +1389,16 @@ let _notifOntimeTimer = null;
 async function sendConfirmNotify(nextTs){
   const nextTime = new Date(nextTs).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
   const s = getSettings();
-  if(!s.lineToken && !s.email){
-    showToast('⚠️ 請先到設定填入 LINE Token 或 Email');
+  if(!notifyPersons.length){
+    showToast('⚠️ 請先到設定新增通知對象');
     return;
   }
 
   // ① 立即發：儲存確認
   const msgSave = `✅ 餵奶紀錄已儲存\n下次餵奶時間：${nextTime}\n時間到前 30 分鐘會再提醒您 🌙`;
   const results = await Promise.all([
-    s.lineToken ? sendLineNotify(msgSave) : Promise.resolve(null),
-    s.email     ? sendEmail('✅ 餵奶紀錄已儲存', msgSave) : Promise.resolve(null),
+    sendLineNotify(msgSave),
+    sendEmail('✅ 餵奶紀錄已儲存', msgSave),
   ]);
   if(results[0]) showToast('📱 LINE 通知已發送！');
   if(results[1]) showToast('📧 Email 通知已發送！');
@@ -1342,17 +1406,17 @@ async function sendConfirmNotify(nextTs){
   // 傳送排程到 Worker Cron（App 不需開著也能收到通知）
   scheduleRemoteNotify(nextTs);
 
-  // ② 預排：30分鐘前提醒（App 開著時的備援）
+  // ② 預排：30分鐘前提醒（App 開著時備援）
   clearTimeout(_notif30Timer);
   clearTimeout(_notifOntimeTimer);
-  const delay30   = nextTs - 30*60*1000 - Date.now();
+  const delay30    = nextTs - 30*60*1000 - Date.now();
   const delayOntime = nextTs - Date.now();
 
   if(s.notif30min !== false && delay30 > 0){
     _notif30Timer = setTimeout(async ()=>{
       const msg30 = `🍼 餵奶提醒\n距離下次餵奶還有 30 分鐘\n預定時間：${nextTime}`;
-      if(s.lineToken) sendLineNotify(msg30);
-      if(s.email)     sendEmail('🍼 餵奶提醒（30分鐘前）', msg30);
+      sendLineNotify(msg30);
+      sendEmail('🍼 餵奶提醒（30分鐘前）', msg30);
     }, delay30);
   }
 
@@ -1360,58 +1424,14 @@ async function sendConfirmNotify(nextTs){
   if(s.notifOntime !== false && delayOntime > 0){
     _notifOntimeTimer = setTimeout(async ()=>{
       const msgOn = `🍼 餵奶時間到了！\n現在是 ${nextTime}，寶寶肚子餓囉 🌸`;
-      if(s.lineToken) sendLineNotify(msgOn);
-      if(s.email)     sendEmail('🍼 餵奶時間到了！', msgOn);
+      sendLineNotify(msgOn);
+      sendEmail('🍼 餵奶時間到了！', msgOn);
     }, delayOntime);
   }
 }
 
 // ── 手機鬧鐘提示 ──────────────────────────────────────
 let _hintTimeStr = '';
-
-function showClockHint(nextTs){
-  const t = new Date(nextTs);
-  _hintTimeStr = t.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('clock-hint-time').textContent = _hintTimeStr;
-  document.getElementById('clock-hint-overlay').style.display = 'flex';
-  // 重置複製按鈕
-  const btn = document.getElementById('copy-btn');
-  if(btn){ btn.textContent = '📋 複製時間'; btn.style.background = 'var(--mauve)'; }
-}
-
-function copyAlarmTime(){
-  const btn = document.getElementById('copy-btn');
-  navigator.clipboard.writeText(_hintTimeStr).then(()=>{
-    btn.textContent = '✅ 已複製！';
-    btn.style.background = 'var(--sage-dark)';
-  }).catch(()=>{
-    // 降版：選取文字
-    const el = document.getElementById('clock-hint-time');
-    const range = document.createRange();
-    range.selectNode(el);
-    window.getSelection().removeAllRanges();
-    window.getSelection().addRange(range);
-    btn.textContent = '✅ 請長按複製';
-    btn.style.background = 'var(--sage-dark)';
-  });
-}
-
-function copyAndHint(){
-  const btn = document.getElementById('copy-go-btn');
-  navigator.clipboard.writeText(_hintTimeStr).then(()=>{
-    btn.textContent = '✅ 已複製！請切換到時鐘 App';
-    btn.style.background = 'var(--sage-dark)';
-  }).catch(()=>{
-    // 降版處理
-    const el = document.getElementById('clock-hint-time');
-    const range = document.createRange();
-    range.selectNode(el);
-    window.getSelection().removeAllRanges();
-    window.getSelection().addRange(range);
-    btn.textContent = '✅ 請長按時間文字複製';
-    btn.style.background = 'var(--sage-dark)';
-  });
-}
 
 // ── Summary ───────────────────────────────────────────
 function updateSummary(){
