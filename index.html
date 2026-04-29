@@ -18,6 +18,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 
 <!-- 字型：線上載入 Noto Serif TC，離線/本機自動降版為系統字型 -->
+<!-- LIFF SDK -->
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500&family=Lato:wght@300;400&display=swap" rel="stylesheet" crossorigin="anonymous" onerror="this.remove()">
 <style>
   :root {
@@ -490,20 +492,19 @@
         </div>
         <div style="margin-bottom:10px;">
           <label style="font-size:0.82rem;color:var(--deep);display:block;margin-bottom:4px;">LINE User ID（選填）</label>
-          <input type="text" class="inp" id="nf-line-id" placeholder="U1e68f3c5..." style="width:100%;">
-          <div style="font-size:0.72rem;color:var(--light-text);margin-top:6px;line-height:1.8;background:#f9f6f3;border-radius:12px;padding:12px;">
-            💡 <b style="color:var(--deep);">不知道 User ID？</b><br>
-            加 LINE Bot 好友，Bot 會自動回覆你的 ID<br>
-            <a href="https://line.me/R/ti/p/@517nsygr" target="_blank"
-              style="display:inline-block;margin-top:8px;background:#06C755;color:white;text-decoration:none;border-radius:20px;padding:7px 18px;font-size:0.8rem;font-weight:600;">
-              ＋ 加入 LINE Bot 好友
-            </a>
-            <div style="margin-top:10px;text-align:center;">
-              <img src="https://qr-official.line.me/gs/M_517nsygr_BW.png"
-                style="width:100px;height:100px;border-radius:8px;border:1px solid var(--blush);"
-                alt="LINE Bot QR Code">
-              <div style="font-size:0.68rem;color:var(--light-text);margin-top:4px;">掃描 QR Code 加好友</div>
-            </div>
+          <!-- LINE 登入自動取得 -->
+          <button onclick="liffLogin()" id="liff-login-btn"
+            style="width:100%;background:#06C755;color:white;border:none;border-radius:12px;padding:11px;font-size:0.88rem;font-weight:600;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+            用 LINE 帳號自動取得 ID
+          </button>
+          <div id="liff-user-info" style="display:none;background:#f0fff4;border-radius:10px;padding:10px;margin-bottom:8px;font-size:0.8rem;color:#2e7d32;">
+            ✅ 已登入：<span id="liff-display-name"></span>
+          </div>
+          <input type="text" class="inp" id="nf-line-id" placeholder="或手動輸入 User ID" style="width:100%;">
+          <div style="font-size:0.72rem;color:var(--light-text);margin-top:4px;line-height:1.6;background:#f9f6f3;border-radius:8px;padding:8px;">
+            💡 點上方綠色按鈕用 LINE 登入，自動取得 ID<br>
+            或加 Bot 好友查詢：<b>@517nsygr</b>
           </div>
         </div>
         <div style="margin-bottom:16px;">
@@ -1241,6 +1242,67 @@ async function testNotifyPerson(type){
     st.style.color = ok ? 'var(--sage-dark)' : '#c62828';
   }
 }
+
+// ── LIFF 整合 ─────────────────────────────────────────
+const LIFF_ID = '2009889780-doLabBTW';
+let liffReady = false;
+let liffProfile = null;
+
+async function initLiff(){
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    liffReady = true;
+    // 若已登入，自動取得 profile
+    if(liff.isLoggedIn()){
+      liffProfile = await liff.getProfile();
+      showLiffUser();
+    }
+  } catch(e){
+    console.log('[LIFF] 初始化失敗:', e.message);
+  }
+}
+
+async function liffLogin(){
+  if(!liffReady){
+    showToast('⚠️ LIFF 初始化中，請稍後再試');
+    return;
+  }
+  if(!liff.isLoggedIn()){
+    // 在 LINE 外部瀏覽器開啟時，redirect 回來
+    liff.login({ redirectUri: window.location.href });
+    return;
+  }
+  try {
+    liffProfile = await liff.getProfile();
+    showLiffUser();
+  } catch(e){
+    showToast('❌ 取得 LINE 資料失敗');
+  }
+}
+
+function showLiffUser(){
+  if(!liffProfile) return;
+  // 自動填入 User ID 和名稱
+  const nameInput = document.getElementById('nf-name');
+  const idInput   = document.getElementById('nf-line-id');
+  if(idInput)   idInput.value   = liffProfile.userId;
+  if(nameInput && !nameInput.value) nameInput.value = liffProfile.displayName;
+  // 顯示登入狀態
+  const info = document.getElementById('liff-user-info');
+  const nameEl = document.getElementById('liff-display-name');
+  if(info && nameEl){
+    nameEl.textContent = liffProfile.displayName;
+    info.style.display = 'block';
+  }
+  const btn = document.getElementById('liff-login-btn');
+  if(btn){
+    btn.textContent = '✅ 已取得 LINE ID';
+    btn.style.background = '#2e7d32';
+  }
+}
+
+// 頁面載入時初始化 LIFF
+initLiff();
 
 // ── LINE Channel Token 設定 ───────────────────────────
 function saveLineToken(){
