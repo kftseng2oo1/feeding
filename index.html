@@ -1119,8 +1119,9 @@ async function scheduleRemoteNotify(nextTs){
 
 // ── Settings ──────────────────────────────────────────
 // notifyPersons: [{id, name, lineId, email}]
-let notifyPersons = [];
-const LINE_TOKEN_KEY = 'nursing_line_token'; // Channel Access Token 單獨存
+// 初始化時直接從 localStorage 載入，不需等切換到設定頁
+let notifyPersons = JSON.parse(localStorage.getItem('notify_persons') || '[]');
+const LINE_TOKEN_KEY = 'nursing_line_token';
 
 function loadSettings(){
   const s = JSON.parse(localStorage.getItem('app_settings')||'{}');
