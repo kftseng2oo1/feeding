@@ -1030,9 +1030,6 @@ function tickCD(hrs){
   const diffMs=nextTs-Date.now();
   const totalSecs=Math.round(diffMs/1000);
 
-  // ── 主動檢查外部通知（LINE / Email）──
-  checkExternalNotify(nextTs);
-
   // ── 鬧鐘觸發邏輯 ──
   if(totalSecs<=0 && alarmOn && !alarmFired && alarmDismissedTs !== nextTs){
     if(snoozeUntil){
@@ -1477,29 +1474,7 @@ async function sendConfirmNotify(nextTs){
 
   // 傳送排程到 Worker Cron（App 不需開著也能收到通知）
   scheduleRemoteNotify(nextTs);
-
-  // ② 預排：30分鐘前提醒（App 開著時備援）
-  clearTimeout(_notif30Timer);
-  clearTimeout(_notifOntimeTimer);
-  const delay30    = nextTs - 30*60*1000 - Date.now();
-  const delayOntime = nextTs - Date.now();
-
-  if(s.notif30min !== false && delay30 > 0){
-    _notif30Timer = setTimeout(async ()=>{
-      const msg30 = `🍼 餵奶提醒\n距離下次餵奶還有 30 分鐘\n預定時間：${nextTime}`;
-      sendLineNotify(msg30);
-      sendEmail('🍼 餵奶提醒（30分鐘前）', msg30);
-    }, delay30);
-  }
-
-  // ③ 預排：時間到
-  if(s.notifOntime !== false && delayOntime > 0){
-    _notifOntimeTimer = setTimeout(async ()=>{
-      const msgOn = `🍼 餵奶時間到了！\n現在是 ${nextTime}，寶寶肚子餓囉 🌸`;
-      sendLineNotify(msgOn);
-      sendEmail('🍼 餵奶時間到了！', msgOn);
-    }, delayOntime);
-  }
+  // Cron 已負責背景通知，App 前景備援移除避免重複發送
 }
 
 // ── 手機鬧鐘提示 ──────────────────────────────────────
