@@ -1226,18 +1226,36 @@ async function testNotifyPerson(type){
   const st     = document.getElementById('nf-status');
   const token  = getLineToken();
   st.textContent = '發送中…'; st.style.color = 'var(--light-text)';
-  const msg = `🍼 餵奶日記測試通知\n嗨 ${name}！LINE 通知正常運作 ✅`;
+
   if(type === 'line'){
-    if(!lineId){ st.textContent='請填入 LINE User ID'; return; }
-    if(!token){ st.textContent='請先在下方設定 LINE Channel Token'; return; }
+    if(!lineId){ st.textContent='請填入 LINE User ID'; st.style.color='#c62828'; return; }
+    if(!token){  st.textContent='請先儲存 LINE Channel Token'; st.style.color='#c62828'; return; }
+    const msg = `🍼 餵奶日記測試通知\n嗨 ${name}！LINE 通知正常運作 ✅`;
     const ok = await sendLineToUser(token, lineId, msg);
     st.textContent = ok ? '✅ LINE 測試成功！' : '❌ 發送失敗，請確認設定';
     st.style.color = ok ? 'var(--sage-dark)' : '#c62828';
   } else {
-    if(!email){ st.textContent='請填入 Email'; return; }
-    const ok = await sendEmail(`🍼 餵奶日記測試`, msg.replace(/\n/g,'<br>'));
-    st.textContent = ok ? '✅ Email 測試成功！' : '❌ 發送失敗';
-    st.style.color = ok ? 'var(--sage-dark)' : '#c62828';
+    if(!email){ st.textContent='請填入 Email'; st.style.color='#c62828'; return; }
+    // 直接用輸入框的 Email 發送，不透過 notifyPersons
+    try {
+      const res = await fetch('https://arcar.kftseng2oo1.workers.dev/send-email', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          to: [email],
+          subject: '🍼 餵奶日記測試 Email',
+          message: `嗨 ${name}！\n\n這是來自餵奶日記的測試郵件，Email 通知正常運作 ✅`
+        })
+      });
+      const data = await res.json().catch(()=>({}));
+      if(res.ok && !data.error){
+        st.textContent = '✅ Email 測試成功！'; st.style.color = 'var(--sage-dark)';
+      } else {
+        st.textContent = '❌ 發送失敗：' + (data.error || res.status); st.style.color = '#c62828';
+      }
+    } catch(e){
+      st.textContent = '❌ 連線失敗：' + e.message; st.style.color = '#c62828';
+    }
   }
 }
 
