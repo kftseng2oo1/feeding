@@ -1,53 +1,57 @@
 // 餵奶日記 · Service Worker
-const CACHE_NAME = 'nursing-diary-v1';
+const CACHE_NAME = 'nursing-diary-v3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
-// 安裝：快取所有資源
+// 不快取的外部網域
+const BYPASS_HOSTS = [
+  'arcar.kftseng2oo1.workers.dev',
+  'api.anthropic.com',
+  'api.line.me',
+  'api.resend.com',
+  'script.google.com',
+  'static.line-scdn.net',
+  'fonts.googleapis.com',
+  'fonts.gstatic.com',
+];
+
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS);
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
   self.skipWaiting();
 });
 
-// 啟動：清除舊快取
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-      )
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
-// 攔截請求：優先用快取，失敗才連網
 self.addEventListener('fetch', e => {
-  // Google Fonts 用 network-first（有網路就抓新的）
-  if (e.request.url.includes('fonts.googleapis.com') ||
-      e.request.url.includes('fonts.gstatic.com')) {
-    e.respondWith(
-      fetch(e.request)
-        .then(res => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
-          return res;
-        })
-        .catch(() => caches.match(e.request))
-    );
+  const url = new URL(e.request.url);
+
+  // 外部 API / CDN 直接走網路，不快取
+  if (BYPASS_HOSTS.some(h => url.hostname.includes(h))) {
+    e.respondWith(fetch(e.request));
     return;
   }
 
-  // 其他資源：Cache First
+  // 非 GET 請求直接走網路
+  if (e.request.method !== 'GET') {
+    e.respondWith(fetch(e.request));
+    return;
+  }
+
+  // 本地資源：Cache First
   e.respondWith(
     caches.match(e.request).then(cached => {
       return cached || fetch(e.request).then(res => {
