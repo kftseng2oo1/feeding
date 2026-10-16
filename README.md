@@ -17,5 +17,3 @@
 - LINE LIFF SDK（`static.line-scdn.net`）
 - 資料存在 localStorage：`nursing_records`、`bottle_records`、`notify_persons`、`notify_plan`、`app_settings` 等
 
-## 備註
-- repo 內另有一個檔名含空白的 `index .html`，內容與 `index.html` 不同，應為舊版殘留，確認後可刪除。
